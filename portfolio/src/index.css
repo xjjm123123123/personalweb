@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #000000;
+  --color-brand-card: #0A0A0A;
+  --color-brand-primary: #8B7CFF;
+  --color-brand-secondary: #A7C7FF;
+  --color-brand-highlight: #C6B8FF;
+  --color-brand-text: #E8ECF5;
+  --color-brand-muted: #9AA4B8;
+
+  --font-sans: "Satoshi", system-ui, sans-serif;
+  --font-display: "Cabinet Grotesk", system-ui, sans-serif;
+  --font-pixel: "VT323", monospace;
+}
+
+@layer base {
+  :root {
+    background-color: var(--color-brand-bg);
+    color: var(--color-brand-text);
+    color-scheme: dark;
+    font-family: var(--font-sans);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}

@@ -1,0 +1,299 @@
+[
+  {
+    "checkpointMs": 0,
+    "exists": true,
+    "now": 2289.2000000029802,
+    "rect": {
+      "x": 1857,
+      "y": -285,
+      "width": 30,
+      "height": 30,
+      "top": -285,
+      "right": 1887,
+      "bottom": -255,
+      "left": 1857
+    },
+    "style": {
+      "opacity": "0",
+      "visibility": "hidden",
+      "transform": "matrix(0.1, 0, 0, 0.1, 1152, -720)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 1872,
+      "y": -270
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-0000ms.png"
+  },
+  {
+    "checkpointMs": 50,
+    "exists": true,
+    "now": 2642.6000000089407,
+    "rect": {
+      "x": 1237.784912109375,
+      "y": -43.893646240234375,
+      "width": 209.572998046875,
+      "height": 209.5728759765625,
+      "top": -43.893646240234375,
+      "right": 1447.35791015625,
+      "bottom": 165.67922973632812,
+      "left": 1237.784912109375
+    },
+    "style": {
+      "opacity": "0.4596",
+      "visibility": "visible",
+      "transform": "matrix(0.448738, 0.249838, -0.249838, 0.448738, 622.571, -389.107)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 1342.5714111328125,
+      "y": 60.892791748046875
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-0050ms.png"
+  },
+  {
+    "checkpointMs": 100,
+    "exists": true,
+    "now": 2885.2000000029802,
+    "rect": {
+      "x": 920.6497802734375,
+      "y": 75.72918701171875,
+      "width": 306.2950439453125,
+      "height": 306.2950134277344,
+      "top": 75.72918701171875,
+      "right": 1226.94482421875,
+      "bottom": 382.0242004394531,
+      "left": 920.6497802734375
+    },
+    "style": {
+      "opacity": "0.6929",
+      "visibility": "visible",
+      "transform": "matrix(-0.545085, -0.475898, 0.475898, -0.545085, 353.797, -221.123)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 1073.7973022460938,
+      "y": 228.87669372558594
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-0100ms.png"
+  },
+  {
+    "checkpointMs": 200,
+    "exists": true,
+    "now": 3126,
+    "rect": {
+      "x": 728.3145751953125,
+      "y": 206.33016967773438,
+      "width": 293.5054931640625,
+      "height": 293.5054626464844,
+      "top": 206.33016967773438,
+      "right": 1021.820068359375,
+      "bottom": 499.83563232421875,
+      "left": 728.3145751953125
+    },
+    "style": {
+      "opacity": "0.8654",
+      "visibility": "visible",
+      "transform": "matrix(-0.105849, 0.872503, -0.872503, -0.105849, 155.067, -96.9171)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 875.0673217773438,
+      "y": 353.08290100097656
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-0200ms.png"
+  },
+  {
+    "checkpointMs": 300,
+    "exists": true,
+    "now": 3320.2999999970198,
+    "rect": {
+      "x": 569.6260986328125,
+      "y": 224.9967803955078,
+      "width": 392.5992431640625,
+      "height": 392.5992431640625,
+      "top": 224.9967803955078,
+      "right": 962.225341796875,
+      "bottom": 617.5960235595703,
+      "left": 569.6260986328125
+    },
+    "style": {
+      "opacity": "0.9601",
+      "visibility": "visible",
+      "transform": "matrix(0.845628, 0.463037, -0.463037, 0.845628, 45.9257, -28.7036)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 765.9257202148438,
+      "y": 421.29640197753906
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-0300ms.png"
+  },
+  {
+    "checkpointMs": 500,
+    "exists": true,
+    "now": 3542.7999999970198,
+    "rect": {
+      "x": 510.8352355957031,
+      "y": 278.4444580078125,
+      "width": 372.0412902832031,
+      "height": 372.04132080078125,
+      "top": 278.4444580078125,
+      "right": 882.8765258789062,
+      "bottom": 650.4857788085938,
+      "left": 510.8352355957031
+    },
+    "style": {
+      "opacity": "1",
+      "visibility": "visible",
+      "transform": "matrix(0.985826, -0.254311, 0.254311, 0.985826, -23.1441, 14.4651)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 696.8558807373047,
+      "y": 464.4651184082031
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-0500ms.png"
+  },
+  {
+    "checkpointMs": 800,
+    "exists": true,
+    "now": 3726.9000000059605,
+    "rect": {
+      "x": 448.5726318359375,
+      "y": 266.9090270996094,
+      "width": 434.1329345703125,
+      "height": 434.1329650878906,
+      "top": 266.9090270996094,
+      "right": 882.70556640625,
+      "bottom": 701.0419921875,
+      "left": 448.5726318359375
+    },
+    "style": {
+      "opacity": "1",
+      "visibility": "visible",
+      "transform": "matrix(0.864521, -0.582589, 0.582589, 0.864521, -54.3609, 33.9755)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 665.6390991210938,
+      "y": 483.9755096435547
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-0800ms.png"
+  },
+  {
+    "checkpointMs": 1200,
+    "exists": true,
+    "now": 3970.5,
+    "rect": {
+      "x": 440.3721923828125,
+      "y": 267.2691955566406,
+      "width": 439.997802734375,
+      "height": 439.9977722167969,
+      "top": 267.2691955566406,
+      "right": 880.3699951171875,
+      "bottom": 707.2669677734375,
+      "left": 440.3721923828125
+    },
+    "style": {
+      "opacity": "1",
+      "visibility": "visible",
+      "transform": "matrix(0.832896, -0.633764, 0.633764, 0.832896, -59.6289, 37.2681)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 660.37109375,
+      "y": 487.26808166503906
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-1200ms.png"
+  },
+  {
+    "checkpointMs": 2000,
+    "exists": true,
+    "now": 4280.600000008941,
+    "rect": {
+      "x": 479.8548889160156,
+      "y": 270.46148681640625,
+      "width": 405.6974182128906,
+      "height": 405.69744873046875,
+      "top": 270.46148681640625,
+      "right": 885.5523071289062,
+      "bottom": 676.158935546875,
+      "left": 479.8548889160156
+    },
+    "style": {
+      "opacity": "1",
+      "visibility": "visible",
+      "transform": "matrix(0.945101, -0.407224, 0.407224, 0.945101, -37.2964, 23.3102)",
+      "willChange": "transform, opacity",
+      "display": "block"
+    },
+    "center": {
+      "x": 682.7035980224609,
+      "y": 473.3102111816406
+    },
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "centerX": 720,
+      "centerY": 450
+    },
+    "screenshot": "f:/personalweb/portfolio/.debug-artifacts/hero-ring-2000ms.png"
+  }
+]

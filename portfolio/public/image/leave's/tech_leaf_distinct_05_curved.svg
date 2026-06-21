@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Distinct technology leaf 5</title>
+  <desc id="desc">A transparent-background SVG technology leaf with a unique silhouette, geometric facets, and circuit-like veins. Right-side dot nodes are removed.</desc>
+  <defs>
+    <linearGradient id="body-v5" x1="180" y1="590" x2="1020" y2="210" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#102f2a"/>
+      <stop offset="0.38" stop-color="#456c47"/>
+      <stop offset="0.72" stop-color="#7f9b5b"/>
+      <stop offset="1" stop-color="#d8bd72"/>
+    </linearGradient>
+    <linearGradient id="edge-v5" x1="200" y1="585" x2="1000" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d8bd72" stop-opacity="0.14"/>
+      <stop offset="0.55" stop-color="#fff0bc" stop-opacity="0.78"/>
+      <stop offset="1" stop-color="#bd744d" stop-opacity="0.42"/>
+    </linearGradient>
+    <radialGradient id="node-v5" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff4bf" stop-opacity="0.96"/>
+      <stop offset="0.42" stop-color="#d8bd72" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#d8bd72" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow-v5" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="clip-v5">
+      <path d="M180 575C300 315 560 150 1010 245C900 460 670 635 180 575Z"/>
+    </clipPath>
+  </defs>
+  <g transform="rotate(9 600 400)">
+    <path d="M180 575C300 315 560 150 1010 245C900 460 670 635 180 575Z" fill="url(#body-v5)" opacity="0.96"/>
+    <path d="M180 575C300 315 560 150 1010 245C900 460 670 635 180 575Z" fill="none" stroke="url(#edge-v5)" stroke-width="5" stroke-linejoin="round"/>
+    <g clip-path="url(#clip-v5)">
+      <path d="M245 555L420 385L610 430L440 600Z" fill="#d8bd72" opacity="0.25"/>
+      <path d="M420 385L610 230L770 310L610 430Z" fill="#f4e8b8" opacity="0.32"/>
+      <path d="M610 430L770 310L975 250L800 490Z" fill="#456c47" opacity="0.48"/>
+      <path d="M440 600L610 430L800 490L600 635Z" fill="#102f2a" opacity="0.44"/>
+      <path d="M315 515L430 285L420 385L245 555Z" fill="#bd744d" opacity="0.36"/>
+      <path d="M720 515L900 430L970 265L875 555Z" fill="#7f9b5b" opacity="0.36"/>
+      <path d="M205 572C440 500 680 345 995 247" fill="none" stroke="#f7e6a3" stroke-width="6" stroke-linecap="round" opacity="0.76"/>
+      <path d="M205 572C440 500 680 345 995 247" fill="none" stroke="#102f2a" stroke-width="2" stroke-linecap="round" opacity="0.38"/>
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M430 505L465 410L540 340" stroke="#d8bd72" stroke-width="3" opacity="0.64"/>
+        <path d="M555 445L635 382L705 312" stroke="#d8bd72" stroke-width="3" opacity="0.60"/>
+        <path d="M650 490L745 432L850 350" stroke="#d8bd72" stroke-width="3" opacity="0.56"/>
+        <path d="M505 552L600 572L705 602" stroke="#d8bd72" stroke-width="3" opacity="0.52"/>
+        <path d="M640 535L730 540L830 510" stroke="#d8bd72" stroke-width="3" opacity="0.48"/>
+        <path d="M360 532H430V505H500" stroke="#d8bd72" stroke-width="3" opacity="0.48"/>
+        <path d="M350 522H430V492H500" stroke="#d8bd72" stroke-width="3" opacity="0.58"/>
+        <path d="M520 430H590V382H650" stroke="#d8bd72" stroke-width="3" opacity="0.54"/>
+      </g>
+      <path d="M520 500L650 440L760 475L630 548Z" fill="#bd744d" opacity="0.18"/>
+      <path d="M660 260L790 238L850 272L705 300Z" fill="#d8bd72" opacity="0.18"/>
+    </g>
+    <g filter="url(#glow-v5)">
+      <circle cx="430" cy="492" r="16" fill="url(#node-v5)"/>
+      <circle cx="575" cy="382" r="16" fill="url(#node-v5)"/>
+      <circle cx="640" cy="475" r="16" fill="url(#node-v5)"/>
+    </g>
+    <g fill="#fff0b6" stroke="#766438" stroke-width="2">
+      <circle cx="430" cy="492" r="5.5"/>
+      <circle cx="575" cy="382" r="5.5"/>
+      <circle cx="640" cy="475" r="5.5"/>
+    </g>
+    <path d="M180 575C140 602 118 638 104 675C164 652 228 610 292 560Z" fill="#102f2a" opacity="0.92"/>
+    <path d="M180 575C140 602 118 638 104 675C164 652 228 610 292 560Z" fill="none" stroke="#d8bd72" stroke-width="3" opacity="0.55"/>
+  </g>
+</svg>

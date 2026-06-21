@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fullscreen Kaleidoscope</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #050506;
+    }
+
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      background: #050506;
+    }
+
+    .leaf-frame {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .leaf-frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.18) 68%, rgba(0, 0, 0, 0.38) 100%);
+      pointer-events: none;
+    }
+
+    .leaf {
+      position: absolute;
+      width: var(--size);
+      opacity: var(--opacity);
+      filter: drop-shadow(0 13px 25px rgba(0, 0, 0, 0.42));
+    }
+
+    .leaf.back {
+      filter: blur(0.2px) drop-shadow(0 16px 30px rgba(0, 0, 0, 0.48));
+    }
+
+    .leaf.front {
+      z-index: 2;
+      filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.5));
+    }
+
+    .leaf img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transform-origin: 18% 52%;
+      animation: leaf-sway var(--duration) ease-in-out infinite alternate;
+      animation-delay: var(--delay);
+    }
+
+    .leaf.top {
+      top: var(--edge);
+      left: var(--pos);
+      transform: translate(-50%, -26%);
+    }
+
+    .leaf.right {
+      right: var(--edge);
+      top: var(--pos);
+      transform: translate(26%, -50%);
+    }
+
+    .leaf.bottom {
+      bottom: var(--edge);
+      left: var(--pos);
+      transform: translate(-50%, 26%);
+    }
+
+    .leaf.left {
+      left: var(--edge);
+      top: var(--pos);
+      transform: translate(-26%, -50%);
+    }
+
+    @keyframes leaf-sway {
+      from {
+        transform: rotate(calc(var(--rot) - 2.8deg)) scale(var(--scale));
+      }
+
+      to {
+        transform: rotate(calc(var(--rot) + 3.6deg)) scale(calc(var(--scale) * 1.025));
+      }
+    }
+
+    .notice {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      z-index: 3;
+      transform: translateX(-50%);
+      max-width: min(520px, calc(100vw - 32px));
+      padding: 10px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      background: rgba(7, 8, 10, 0.58);
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      transition: opacity 450ms ease;
+      pointer-events: none;
+    }
+
+    .notice.hidden {
+      opacity: 0;
+    }
+
+    @media (max-width: 760px) {
+      .leaf.top,
+      .leaf.bottom {
+        --edge: -13vw !important;
+      }
+
+      .leaf.left,
+      .leaf.right {
+        --edge: -18vw !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="kaleidoscope"></canvas>
+  <div class="leaf-frame" id="leafFrame" aria-hidden="true"></div>
+  <div class="notice hidden" id="notice">Put an image in the image folder and name it 1.jpg, 1.png, or photo.jpg, then refresh.</div>
+
+  <script>
+    const IMAGE_PATHS = [
+      "image/1.jpg",
+      "image/1.jpeg",
+      "image/1.png",
+      "image/photo.jpg",
+      "image/photo.jpeg",
+      "image/photo.png",
+      "image/image.jpg",
+      "image/image.jpeg",
+      "image/image.png"
+    ];
+
+    const LEAF_PATHS = [
+      "image/leave%27s/tech_leaf_distinct_01_lance.svg",
+      "image/leave%27s/tech_leaf_distinct_02_broad.svg",
+      "image/leave%27s/tech_leaf_distinct_03_slender.svg",
+      "image/leave%27s/tech_leaf_distinct_04_split-tip.svg",
+      "image/leave%27s/tech_leaf_distinct_05_curved.svg"
+    ];
+
+    const canvas = document.getElementById("kaleidoscope");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const notice = document.getElementById("notice");
+    const leafFrame = document.getElementById("leafFrame");
+
+    const state = {
+      image: null,
+      width: 0,
+      height: 0,
+      dpr: 1,
+      time: 0,
+      mouseX: 0,
+      mouseY: 0,
+      targetMouseX: 0,
+      targetMouseY: 0
+    };
+
+    function resize() {
+      state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      state.width = Math.floor(window.innerWidth * state.dpr);
+      state.height = Math.floor(window.innerHeight * state.dpr);
+      canvas.width = state.width;
+      canvas.height = state.height;
+    }
+
+    function tryLoad(path) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({ image, path });
+        image.onerror = reject;
+        image.src = `${path}?v=${Date.now()}`;
+      });
+    }
+
+    async function loadFirstImage() {
+      for (const path of IMAGE_PATHS) {
+        try {
+          return await tryLoad(path);
+        } catch (error) {
+          // Continue trying the next conventional filename.
+        }
+      }
+      return null;
+    }
+
+    function createLeafFrame() {
+      const sides = [
+        {
+          name: "top",
+          edge: "clamp(-150px, -6vw, -68px)",
+          positions: [5, 18, 36, 58, 78, 94],
+          backPositions: [14, 48, 86],
+          sizeVw: 22
+        },
+        {
+          name: "right",
+          edge: "clamp(-190px, -7vw, -78px)",
+          positions: [7, 24, 44, 64, 84, 97],
+          backPositions: [16, 52, 88],
+          sizeVw: 20
+        },
+        {
+          name: "bottom",
+          edge: "clamp(-150px, -6vw, -68px)",
+          positions: [2, 13, 25, 38, 52, 65, 78, 90, 98],
+          backPositions: [6, 31, 55, 83],
+          sizeVw: 23
+        },
+        {
+          name: "left",
+          edge: "clamp(-190px, -7vw, -78px)",
+          positions: [5, 22, 43, 63, 82, 96],
+          backPositions: [14, 50, 86],
+          sizeVw: 20
+        }
+      ];
+
+      let leafIndex = 0;
+      const angleToCenter = (sideName, pos) => {
+        const x = sideName === "left" ? 0 : sideName === "right" ? 100 : pos;
+        const y = sideName === "top" ? 0 : sideName === "bottom" ? 100 : pos;
+        return Math.atan2(50 - y, 50 - x) * 180 / Math.PI;
+      };
+
+      const addLeaf = (side, pos, layer, localIndex) => {
+          const leaf = document.createElement("span");
+          const image = document.createElement("img");
+          const wave = Math.sin((leafIndex + 1) * 1.74);
+          const clusterBoost = localIndex % 4 === 0 ? 0.14 : localIndex % 3 === 0 ? 0.06 : 0;
+          const baseScale = layer === "front" ? 1.05 : 0.88;
+          const scale = baseScale + clusterBoost + ((leafIndex * 7) % 11) / 34;
+          const edgeOffset = layer === "front" ? side.edge : `calc(${side.edge} - clamp(24px, 2vw, 72px))`;
+          const pointsToCenter = leafIndex % 5 !== 3;
+          const centerRotation = angleToCenter(side.name, pos);
+          const scatterRotation = centerRotation + (leafIndex % 2 === 0 ? 58 : -64);
+          const jitter = Math.sin((leafIndex + 3) * 2.13) * (pointsToCenter ? 10 : 18);
+          const rotation = (pointsToCenter ? centerRotation : scatterRotation) + jitter;
+
+          leaf.className = `leaf ${side.name} ${layer}`;
+          leaf.style.setProperty("--pos", `${pos}%`);
+          leaf.style.setProperty("--edge", edgeOffset);
+          leaf.style.setProperty("--rot", `${rotation + wave * 7}deg`);
+          leaf.style.setProperty("--scale", scale.toFixed(2));
+          leaf.style.setProperty("--size", `clamp(190px, ${side.sizeVw * scale}vw, ${640 * scale}px)`);
+          leaf.style.setProperty("--opacity", layer === "front" ? `${0.78 + ((leafIndex * 3) % 6) / 34}` : `${0.42 + ((leafIndex * 5) % 7) / 42}`);
+          leaf.style.setProperty("--duration", `${5.8 + ((leafIndex * 5) % 9) * 0.55}s`);
+          leaf.style.setProperty("--delay", `${-leafIndex * 0.43}s`);
+
+          image.src = LEAF_PATHS[leafIndex % LEAF_PATHS.length];
+          image.alt = "";
+          leaf.appendChild(image);
+          leafFrame.appendChild(leaf);
+          leafIndex += 1;
+      };
+
+      sides.forEach((side) => {
+        side.backPositions.forEach((pos, index) => addLeaf(side, pos, "back", index));
+        side.positions.forEach((pos, index) => addLeaf(side, pos, "front", index));
+      });
+    }
+
+    function drawFallback() {
+      const { width, height } = state;
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = Math.hypot(width, height);
+
+      ctx.fillStyle = "#050506";
+      ctx.fillRect(0, 0, width, height);
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      for (let i = 0; i < 36; i += 1) {
+        const hue = (i * 23 + state.time * 30) % 360;
+        ctx.rotate((Math.PI * 2) / 36);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius * 0.46, -0.045, 0.045);
+        ctx.closePath();
+        ctx.fillStyle = `hsla(${hue}, 78%, 58%, 0.26)`;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawKaleidoscope() {
+      if (!state.image) {
+        drawFallback();
+        return;
+      }
+
+      const { image, width, height } = state;
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = Math.hypot(width, height);
+      const segments = 24;
+      const wedge = (Math.PI * 2) / segments;
+      const organicPhase =
+        state.time * 0.055 +
+        Math.sin(state.time * 0.31) * 0.22 +
+        Math.sin(state.time * 0.73 + 1.7) * 0.075;
+      const mouseBreath = 0.7 + Math.sin(state.time * 0.43 + 0.9) * 0.22 + Math.sin(state.time * 0.17) * 0.08;
+      const rotation = organicPhase + Math.sin(state.time * 0.52) * 0.08;
+      const pulse = 1 + Math.sin(state.time * 0.37) * 0.035 + Math.sin(state.time * 0.91 + 1.2) * 0.018;
+      const baseScale = Math.max(width / image.width, height / image.height);
+      const scale = baseScale * 1.06 * pulse;
+      const driftX =
+        (Math.sin(state.time * 0.19) + Math.sin(state.time * 0.61 + 2.4) * 0.45) * width * 0.038 +
+        state.mouseX * width * 0.06 * mouseBreath;
+      const driftY =
+        (Math.cos(state.time * 0.23) + Math.sin(state.time * 0.47 + 0.8) * 0.5) * height * 0.038 +
+        state.mouseY * height * 0.06 * (1.05 - mouseBreath * 0.32);
+
+      ctx.fillStyle = "#050506";
+      ctx.fillRect(0, 0, width, height);
+
+      for (let i = 0; i < segments; i += 1) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(i * wedge + rotation);
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(radius * Math.cos(-wedge / 2), radius * Math.sin(-wedge / 2));
+        ctx.arc(0, 0, radius, -wedge / 2, wedge / 2);
+        ctx.closePath();
+        ctx.clip();
+
+        if (i % 2) {
+          ctx.scale(1, -1);
+        }
+
+        ctx.rotate(-rotation * 0.55 + Math.sin(state.time * 0.15 + Math.sin(state.time * 0.29)) * 0.12);
+        ctx.translate(driftX, driftY);
+        ctx.scale(scale, scale);
+        ctx.drawImage(image, -image.width / 2, -image.height / 2);
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const glow = ctx.createRadialGradient(cx, cy, radius * 0.04, cx, cy, radius * 0.52);
+      glow.addColorStop(0, "rgba(255,255,255,0.20)");
+      glow.addColorStop(0.42, "rgba(255,255,255,0.05)");
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      const vignette = ctx.createRadialGradient(cx, cy, radius * 0.22, cx, cy, radius * 0.72);
+      vignette.addColorStop(0, "rgba(255,255,255,1)");
+      vignette.addColorStop(1, "rgba(0,0,0,0.36)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
+    }
+
+    function animate(now) {
+      state.time = now / 1000;
+      state.mouseX += (state.targetMouseX - state.mouseX) * 0.035;
+      state.mouseY += (state.targetMouseY - state.mouseY) * 0.035;
+      drawKaleidoscope();
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("pointermove", (event) => {
+      state.targetMouseX = (event.clientX / window.innerWidth - 0.5) * 2;
+      state.targetMouseY = (event.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    resize();
+    createLeafFrame();
+    loadFirstImage().then((result) => {
+      if (result) {
+        state.image = result.image;
+      } else {
+        notice.classList.remove("hidden");
+      }
+
+      requestAnimationFrame(animate);
+    });
+  </script>
+</body>
+</html>

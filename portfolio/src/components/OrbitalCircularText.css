@@ -1,0 +1,89 @@
+.orbital-circular-text {
+  position: relative;
+  width: var(--orbital-size);
+  height: var(--orbital-size);
+  transform-origin: 50% 50%;
+  pointer-events: auto;
+
+  --active-spin-duration: var(--spin-duration);
+}
+
+.orbital-spin-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.orbital-circular-text.is-settled .orbital-spin-layer {
+  animation: orbital-circular-spin var(--active-spin-duration) linear infinite;
+}
+
+.orbital-circular-text[data-hover='speedUp']:hover {
+  --active-spin-duration: var(--hover-spin-duration);
+}
+
+.orbital-circular-text[data-hover='slowDown']:hover {
+  --active-spin-duration: var(--hover-spin-duration);
+}
+
+.orbital-circular-text[data-hover='pause']:hover .orbital-spin-layer {
+  animation-play-state: paused;
+}
+
+.orbital-circular-text[data-hover='goBonkers']:hover {
+  --active-spin-duration: var(--hover-spin-duration);
+}
+
+.orbital-circular-text[data-hover='goBonkers']:hover .orbital-spin-layer {
+  scale: 0.86;
+}
+
+.orbital-letter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  display: block;
+  width: 0;
+  height: 0;
+
+  transform-origin: 0 0;
+  will-change: transform, opacity, filter;
+}
+
+.orbital-glyph {
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  display: inline-block;
+  transform: translate(-50%, -50%);
+
+  font-size: clamp(20px, 2.5vw, 34px);
+  font-weight: 900;
+  letter-spacing: 0.015em;
+  line-height: 1;
+  color: #fff;
+  white-space: pre;
+
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.75),
+    0 0 18px rgba(150, 190, 255, 0.42);
+}
+
+@keyframes orbital-circular-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbital-circular-text.is-settled .orbital-spin-layer {
+    animation: none;
+  }
+}

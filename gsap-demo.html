@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSAP 动画可视化演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        
+        .gradient-text {
+            background: linear-gradient(to right, #38bdf8, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+        }
+
+        .box { 
+            width: 100px; height: 100px; 
+            background: linear-gradient(135deg, #6366f1, #a855f7); 
+            border-radius: 20px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 2rem; 
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Timeline (时间轴入场动画) -->
+    <section class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden" id="hero">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM0NzU1NjkiIGZpbGwtb3BhY2l0eT0iMC4xNSI+PHBhdGggZD0iTTM2IDM0djIwaDJWMzRoLTJ6bTIwLTIwdjIwaDJWMTRoLTJ6TTM2IDM0VjE0aDJ2MjBoLTJ6TTM0IDM2SDE0djJoMjB2LTJ6bTIwLTIwSDM0djJoMjB2LTJ6TTM0IDM2VjU2aDJWMzZoLTJ6TTE0IDM0djIwaDJWMzRoLTJ6TTM0IDE0SDE0djJoMjB2LTJ6TTE0IDM0VjE0aDJ2MjBoLTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
+        
+        <h1 class="text-6xl md:text-8xl font-black mb-6 hero-text opacity-0 tracking-tight relative z-10">
+            <span class="gradient-text">GSAP</span> 动效演示
+        </h1>
+        <p class="text-2xl text-slate-400 mb-16 hero-text opacity-0 relative z-10 font-light tracking-wide">
+            Timeline • Stagger • ScrollTrigger
+        </p>
+        
+        <div class="flex gap-6 hero-boxes relative z-10">
+            <div class="box opacity-0">G</div>
+            <div class="box opacity-0">S</div>
+            <div class="box opacity-0">A</div>
+            <div class="box opacity-0">P</div>
+        </div>
+        
+        <div class="absolute bottom-12 animate-bounce text-slate-500 hero-text opacity-0 font-medium tracking-widest uppercase">
+            向下滚动探索 ↓
+        </div>
+    </section>
+
+    <!-- 2. Stagger (交错动画) -->
+    <section class="min-h-screen py-24 flex flex-col items-center justify-center bg-slate-900 border-y border-slate-800" id="stagger-section">
+        <h2 class="text-4xl font-bold mb-4">Stagger <span class="text-slate-500 font-light">| 网格交错</span></h2>
+        <p class="text-slate-400 mb-16 text-lg">基于网格的中心向外扩散效果</p>
+        
+        <div class="grid grid-cols-7 gap-3 md:gap-4 p-8 bg-slate-800/50 rounded-3xl border border-slate-700/50" id="grid">
+            <!-- JS 将在此处生成 49 个方块 -->
+        </div>
+    </section>
+
+    <!-- 3. ScrollTrigger (滚动进度 Scrub) -->
+    <section class="min-h-screen py-24 flex flex-col items-center justify-center bg-slate-950 overflow-hidden relative">
+        <h2 class="text-4xl font-bold mb-4">Scrub <span class="text-slate-500 font-light">| 滚动追移</span></h2>
+        <p class="text-slate-400 mb-20 text-lg">动画进度完全绑定于您的鼠标滚轮</p>
+
+        <div class="w-full max-w-5xl relative h-64 bg-slate-900 rounded-[2.5rem] p-6 overflow-hidden border border-slate-800 shadow-2xl">
+            <div class="box absolute top-1/2 -translate-y-1/2 left-6 scrub-box z-10 bg-gradient-to-r from-rose-500 to-orange-500 shadow-[0_10px_25px_-5px_rgba(244,63,94,0.4)]">
+                🚀
+            </div>
+            
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-slate-700 font-mono text-3xl font-bold opacity-40">
+                <span>PROGRESS BAR</span>
+                <div class="w-[80%] h-2 bg-slate-800 mt-6 rounded-full overflow-hidden">
+                    <div class="h-full bg-slate-600 scrub-progress w-0"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. ScrollTrigger (固定视图 Pinning) -->
+    <section class="min-h-screen flex items-center justify-center bg-slate-900" id="pin-section">
+        <div class="w-full max-w-7xl mx-auto px-8 flex items-center justify-between">
+            
+            <!-- 左侧固定文字 -->
+            <div class="w-5/12 pr-16 pin-text">
+                <div class="inline-block px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-400 font-semibold tracking-wider text-sm mb-6 border border-indigo-500/20">
+                    PINNING
+                </div>
+                <h2 class="text-5xl font-bold mb-8 leading-tight">将元素<br><span class="text-indigo-400">固定在视口</span></h2>
+                <p class="text-xl text-slate-400 leading-relaxed">
+                    在继续向下滚动时，这段文字会停留在原位，直到右侧的所有内容展示完毕。这种技术非常适合用来制作产品特性的多步骤展示。
+                </p>
+            </div>
+
+            <!-- 右侧滚动卡片 -->
+            <div class="w-7/12 flex flex-col gap-[50vh] py-[25vh] pin-cards">
+                <div class="h-[50vh] w-full bg-gradient-to-br from-cyan-500 to-blue-500 rounded-[2.5rem] shadow-2xl flex items-center justify-center text-4xl font-bold border border-white/20">第一步</div>
+                <div class="h-[50vh] w-full bg-gradient-to-br from-purple-500 to-pink-500 rounded-[2.5rem] shadow-2xl flex items-center justify-center text-4xl font-bold border border-white/20">第二步</div>
+                <div class="h-[50vh] w-full bg-gradient-to-br from-orange-500 to-amber-500 rounded-[2.5rem] shadow-2xl flex items-center justify-center text-4xl font-bold border border-white/20">第三步</div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="py-16 text-center text-slate-600 bg-slate-950 font-medium tracking-wide">
+        GSAP 动画可视化演示结束
+    </footer>
+
+    <!-- 引入 GSAP 核心库与 ScrollTrigger 插件 -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    
+    <script>
+        // 注册 ScrollTrigger 插件
+        gsap.registerPlugin(ScrollTrigger);
+
+        // --- 1. Timeline (时间轴入场动画) ---
+        const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+        // 文字依次淡入并向上移动
+        tl.to(".hero-text", { opacity: 1, y: -30, duration: 1.2, stagger: 0.2, marginTop: 30 })
+          // 方块依次缩放、旋转出现 (使用 "<0.2" 表示在上个动画开始后 0.2 秒启动)
+          .to(".hero-boxes .box", { 
+              opacity: 1, 
+              scale: 1, 
+              rotation: 360, 
+              duration: 1, 
+              stagger: 0.1,
+              ease: "back.out(1.7)"
+          }, "<0.4");
+
+
+        // --- 2. Stagger (网格交错动画) ---
+        const grid = document.getElementById("grid");
+        // 动态生成 49 个小方块
+        for (let i = 0; i < 49; i++) {
+            const el = document.createElement("div");
+            el.className = "w-10 h-10 md:w-14 md:h-14 bg-slate-700/80 rounded-xl grid-item border border-slate-600/50 shadow-inner";
+            grid.appendChild(el);
+        }
+
+        gsap.from(".grid-item", {
+            scrollTrigger: {
+                trigger: "#stagger-section",
+                start: "top 60%", // 当部分顶部到达视口 60% 位置时触发
+                toggleActions: "play none none reverse" // 滚动离开再回来时反向播放
+            },
+            scale: 0,
+            y: 30,
+            opacity: 0,
+            duration: 1.2,
+            ease: "back.out(1.5)",
+            stagger: {
+                amount: 1.5,      // 所有方块动画总耗时 1.5 秒
+                grid: "auto",     // 自动检测网格
+                from: "center"    // 从中心向外扩散
+            }
+        });
+
+
+        // --- 3. ScrollTrigger Scrub (滚动进度绑定) ---
+        // 火箭方块的移动与旋转
+        gsap.to(".scrub-box", {
+            scrollTrigger: {
+                trigger: ".scrub-box",
+                start: "center 80%",
+                end: "center 20%",
+                scrub: 1, // 开启平滑追移，1秒延迟让动画更平滑
+            },
+            x: "calc(100vw - 300px)", // 移动到容器右侧
+            rotation: 720,
+            borderRadius: "50%" // 滚动过程中变为圆形
+        });
+        
+        // 背景进度条的宽度变化
+        gsap.to(".scrub-progress", {
+            scrollTrigger: {
+                trigger: ".scrub-box",
+                start: "center 80%",
+                end: "center 20%",
+                scrub: 0, 
+            },
+            width: "100%",
+            ease: "none"
+        });
+
+
+        // --- 4. ScrollTrigger Pinning (固定效果) ---
+        // 1. 固定左侧的文字区域
+        ScrollTrigger.create({
+            trigger: "#pin-section",
+            start: "top top",
+            end: "+=200%", // 固定时长：向下滚动相当于屏幕高度 200% 的距离
+            pin: ".pin-text", // 将文字固定
+        });
+
+        // 2. 右侧卡片随着滚动淡入淡出和缩放
+        const cards = gsap.utils.toArray(".pin-cards > div");
+        cards.forEach((card, i) => {
+            gsap.fromTo(card, 
+                { opacity: 0.2, scale: 0.8 }, 
+                { 
+                    opacity: 1, 
+                    scale: 1,
+                    scrollTrigger: {
+                        trigger: card,
+                        start: "top 70%",
+                        end: "top 30%",
+                        scrub: true
+                    }
+                }
+            );
+        });
+
+    </script>
+</body>
+</html>
