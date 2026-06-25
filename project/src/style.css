@@ -1,0 +1,96 @@
+html, 
+body { 
+  margin: 0; 
+  /* 进一步压低背景亮度，让它更接近纯黑但保留极微弱的深蓝层次 */
+  background: 
+    radial-gradient(circle at 70% 30%, #0A0F24 0%, transparent 35%), 
+    radial-gradient(circle at 20% 70%, #060914 0%, transparent 45%), 
+    #02030A; 
+  color: white; 
+  font-family: 'Press Start 2P', monospace;
+  overflow-x: hidden;
+} 
+
+/* 增加 CRT 扫描线 */
+body::before { 
+  content: ""; 
+  position: fixed; 
+  inset: 0; 
+  pointer-events: none; 
+  background: repeating-linear-gradient( 
+    to bottom, 
+    rgba(255,255,255,0.02) 0, 
+    rgba(255,255,255,0.02) 1px, 
+    transparent 1px, 
+    transparent 4px 
+  ); 
+  opacity: 0.15; 
+  z-index: 4; 
+} 
+
+/* 增加像素网格 */
+body::after { 
+  content: ""; 
+  position: fixed; 
+  inset: 0; 
+  pointer-events: none; 
+  background: 
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), 
+    linear-gradient(90deg, rgba(255,255,255,0.01) 1px, transparent 1px); 
+  background-size: 4px 4px; 
+  mix-blend-mode: overlay; 
+  opacity: 0.20; 
+  z-index: 3; 
+} 
+ 
+#webgl { 
+  position: fixed; 
+  inset: 0; 
+  width: 100vw !important; 
+  height: 100vh !important; 
+  z-index: 0; 
+  image-rendering: pixelated; /* 关键：强制像素化放大 */
+} 
+ 
+main { 
+  position: relative; 
+  z-index: 1; 
+} 
+ 
+.hero { 
+  height: 100vh; 
+  display: flex; 
+  align-items: center; 
+  padding-left: 8vw; 
+} 
+
+.hero h1 {
+  font-size: clamp(32px, 6vw, 72px);
+  line-height: 1.4; 
+  letter-spacing: 0; 
+  color: #f8fbff; 
+  text-shadow: 
+    4px 4px 0 #111b3d, 
+    0 0 18px rgba(94, 230, 255, 0.35); 
+}
+ 
+.morph-section { 
+  height: 180vh; 
+} 
+ 
+.content { 
+  min-height: 100vh; 
+  background: #02030A; 
+  padding: 10vw; 
+  border-top: 4px solid #0A0F24;
+}
+
+.content h2 {
+  font-size: clamp(20px, 3vw, 40px);
+  margin-bottom: 2rem;
+  text-shadow: 2px 2px 0 #111b3d;
+}
+
+.content p {
+  line-height: 1.8;
+}

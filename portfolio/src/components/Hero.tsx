@@ -1,14 +1,14 @@
 import { useRef, useState, useLayoutEffect } from "react";
 import { KaleidoscopeBackground } from "./KaleidoscopeBackground";
 import OrbitalCircularText from "./OrbitalCircularText";
-import { StarField } from "./StarField";
+import { ThreePixelStarField } from "./ThreePixelStarField";
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const meteorRef = useRef<HTMLDivElement>(null);
   const trailPathRef = useRef<SVGPathElement>(null);
   const trailPointsRef = useRef<{ x: number; y: number }[]>([]);
-  const [entered, setEntered] = useState(false);
+  const [, setEntered] = useState(false);
 
   useLayoutEffect(() => {
     const prefersReducedMotion = window.matchMedia(
@@ -160,16 +160,16 @@ export function Hero() {
       }}
     >
       <KaleidoscopeBackground />
-      
-      <div className="absolute inset-0 z-10 pointer-events-none mix-blend-difference">
-        {/* Natural Stars Layer */}
-        <StarField count={110} />
 
+      {/* 3D Pixel Star Field - Fixed background */}
+      <ThreePixelStarField />
+
+      <div className="absolute inset-0 z-10 pointer-events-none mix-blend-difference">
         {/* Orbital Circular Stage */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[4]">
           <OrbitalCircularText
             text="WELCOME TO MY GALAXY"
-            radius={170}
+            radius={280}
             spinDuration={36}
             introDuration={3.4}
             wordStagger={0.18}
@@ -180,11 +180,11 @@ export function Hero() {
         </div>
 
         {/* Meteor Trail SVG */}
-        <svg 
+        <svg
           className="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-[1]"
         >
-          <path 
-            ref={trailPathRef} 
+          <path
+            ref={trailPathRef}
             fill="none"
             stroke="rgba(155, 205, 255, 0.32)"
             strokeWidth="10"

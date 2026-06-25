@@ -36,7 +36,7 @@ export function MeteorShower() {
     window.addEventListener('resize', resize);
 
     const meteors: Meteor[] = [];
-    const maxMeteors = 18; // 稍微增加流星密度
+    const maxMeteors = 6; // 稍微增加流星密度，但按照要求减少2/3（原来18，现在6）
     // 颜色包含纯白、淡金黄（呼应万花筒）、淡蓝
     const colors = ['255, 255, 255', '255, 220, 100', '200, 230, 255'];
 
@@ -70,8 +70,8 @@ export function MeteorShower() {
 
       meteors.forEach((meteor, index) => {
         if (!meteor.active) {
-          // 随机重生，错开流星的下落节奏
-          if (Math.random() > 0.98) {
+          // 随机重生，错开流星的下落节奏。因为数量少了，稍微降低一下重生的概率让其更稀有
+          if (Math.random() > 0.995) {
             meteors[index] = createMeteor();
           }
           return;
@@ -79,10 +79,10 @@ export function MeteorShower() {
 
         const headX = meteor.x;
         const headY = meteor.y;
-        
+
         // 像素块大小（为了明显的像素风）
         const pixelSize = 4;
-        
+
         // 将头部坐标对齐到像素网格，保证方块在移动时具有复古的跳跃感
         const gridX = Math.round(headX / pixelSize) * pixelSize;
         const gridY = Math.round(headY / pixelSize) * pixelSize;
@@ -100,7 +100,7 @@ export function MeteorShower() {
 
           // 越靠近尾部透明度越低，用平方让头部更亮、尾巴迅速变暗
           const blockOpacity = meteor.opacity * Math.pow(1 - j / numBlocks, 1.5);
-          
+
           ctx.fillStyle = `rgba(${meteor.color}, ${blockOpacity})`;
           ctx.fillRect(blockX, blockY, pixelSize, pixelSize);
         }
@@ -108,7 +108,7 @@ export function MeteorShower() {
         // 间隔3s-5s突然减速然后再加速
         const cyclePos = (elapsed + meteor.phase) % meteor.cycleDuration;
         let speedMult = 1.0;
-        
+
         // 假设每次减速过程持续 1.2 秒
         if (cyclePos < 1.2) {
           // 使用正弦波构造一个平滑的深坑，最低点达到原来速度的 5%

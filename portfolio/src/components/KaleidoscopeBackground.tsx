@@ -121,10 +121,10 @@ export function KaleidoscopeBackground() {
       const scrollRotation = state.scrollY * 0.0015;
       const rotation = organicPhase + Math.sin(state.time * 0.52) * 0.08 + scrollRotation;
 
-      // 调整基础的放大倍率，并增大脉冲幅度使呼吸效果更明显
+      // 调整基础的放大倍率，并增大脉冲幅度使呼吸效果更明显。将基础缩放调小
       const pulse = 1 + Math.sin(state.time * 0.37) * 0.06 + Math.sin(state.time * 0.91 + 1.2) * 0.03;
       const baseScale = Math.max(width / image.width, height / image.height);
-      const scale = baseScale * 1.5 * pulse;
+      const scale = baseScale * 0.8 * pulse; // 从 1.1 改为 0.8，让万花筒进一步变小
       const driftX =
         (Math.sin(state.time * 0.19) + Math.sin(state.time * 0.61 + 2.4) * 0.45) * width * 0.038 +
         state.mouseX * width * 0.06 * mouseBreath;
@@ -171,9 +171,10 @@ export function KaleidoscopeBackground() {
 
       ctx!.save();
       ctx!.globalCompositeOperation = "multiply";
-      const vignette = ctx!.createRadialGradient(cx, cy, radius * 0.22, cx, cy, radius * 0.72);
+      // 增加暗角（Vignette）的覆盖范围和不透明度
+      const vignette = ctx!.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius * 0.65);
       vignette.addColorStop(0, "rgba(255,255,255,1)");
-      vignette.addColorStop(1, "rgba(0,0,0,0.36)");
+      vignette.addColorStop(1, "rgba(0,0,0,0.65)");
       ctx!.fillStyle = vignette;
       ctx!.fillRect(0, 0, width, height);
       ctx!.restore();
@@ -193,7 +194,7 @@ export function KaleidoscopeBackground() {
       const imgH = state.image ? state.image.height : 1024;
       const visualBaseScale = Math.max(window.innerWidth / imgW, window.innerHeight / imgH);
       const pulse = 1 + Math.sin(state.time * 0.37) * 0.015 + Math.sin(state.time * 0.91 + 1.2) * 0.008;
-      const visualScale = visualBaseScale * 1.5 * pulse;
+      const visualScale = visualBaseScale * 0.8 * pulse; // 改为 0.8 保持一致
       document.documentElement.style.setProperty('--k-scale', visualScale.toFixed(4));
 
       drawKaleidoscope();
@@ -307,17 +308,17 @@ export function KaleidoscopeBackground() {
       {/* 流星雨层：放在背景画布之上，但在纹理和蒙版之下 */}
       <MeteorShower />
 
-      {/* 像素化 Dither 纹理叠加（纯 CSS 实现，复古质感），同时调大叠加的纹理像素大小配合底图 */}
+      {/* 像素化 Dither 纹理叠加（纯 CSS 实现，复古质感），同时调低透明度让底图更亮 */}
       <div
-        className="absolute inset-0 z-[2] pointer-events-none mix-blend-overlay opacity-40"
+        className="absolute inset-0 z-[2] pointer-events-none mix-blend-overlay opacity-25"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 2 2' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.15)'/%3E%3Crect x='1' y='1' width='1' height='1' fill='rgba(255,255,255,0.15)'/%3E%3Crect x='1' y='0' width='1' height='1' fill='rgba(0,0,0,0.15)'/%3E%3Crect x='0' y='1' width='1' height='1' fill='rgba(0,0,0,0.15)'/%3E%3C/svg%3E")`,
           backgroundSize: '6px 6px',
         }}
       />
 
-      {/* 自定义径向遮罩：正中心 50%，中间 70%，边缘 80% 的黑色不透明度 */}
-      <div className="absolute inset-0 z-[3] pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.5)_0%,rgba(0,0,0,0.7)_50%,rgba(0,0,0,0.8)_100%)]" />
+      {/* 自定义径向遮罩：把中心保留，但周围和边缘的黑色显著加深 */}
+      <div className="absolute inset-0 z-[3] pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.75)_40%,rgba(0,0,0,0.95)_100%)]" />
     </div>
   );
 }
