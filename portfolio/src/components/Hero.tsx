@@ -150,13 +150,11 @@ export function Hero() {
 
   return (
     <section
+      id="hero"
       ref={containerRef}
       className="relative min-h-[100dvh] w-full flex flex-col items-center justify-center overflow-hidden"
       style={{
-        background: `
-          radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.08), transparent 16%),
-          radial-gradient(circle at 78% 76%, rgba(120, 80, 255, 0.1), transparent 24%)
-        `
+        backgroundColor: "#050506"
       }}
     >
       <KaleidoscopeBackground />

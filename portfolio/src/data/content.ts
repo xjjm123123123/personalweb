@@ -7,7 +7,7 @@ export const content = {
     ctaSecondary: { label: "下载简历", href: "/resume.pdf" }
   },
   about: {
-    core: "我喜欢拆解问题、探索数据、理解用户，并把想法转化为真实价值。",
+    core: "以前，能力决定你能学什么；现在，AI 让你能学会一切。\n所以别再问'我能不能'，去做那件不可能的事——这就是未来的速度。",
     cards: [
       { title: "我是谁", desc: "大三在读 / 交互设计与数据分析 / 热爱创造" },
       { title: "我在做什么", desc: "项目实践、数据分析、产品设计、研究学习" },
@@ -58,15 +58,13 @@ export const content = {
   experience: [
     {
       id: "exp-1",
-      company: "XX科技公司",
-      role: "数据分析实习生",
-      date: "2024.06 - 2024.09",
+      company: "字节跳动 (Lark GTM)",
+      role: "AI解决方案实习生",
+      date: "2025.12 - 2026.07",
       location: "北京",
       responsibilities: [
-        "协助整理业务数据，完成数据清洗与分类",
-        "参与竞品分析，输出调研报告",
-        "使用 Excel 和 Python 完成基础数据分析",
-        "参与部门周会，整理会议纪要和项目进展"
+        "深入剖析多行业真实业务场景，评估 AI 技术赋能潜力，独立撰写标准化 AI 解决方案架构文档",
+        "基于飞书开放平台及内部 AI Infra，结合 Vibe Coding 模式快速构建并落地 20+ 个可运行的 AI 产品 MVP"
       ],
       achievements: [
         "独立完成一份数据分析报告",
@@ -121,7 +119,7 @@ export const content = {
   ],
   contact: {
     heading: "期待和你一起创造一些有意思的东西。",
-    email: "hello@example.com",
+    email: "xuj038904@gmail.com",
     linkedin: "https://linkedin.com",
     github: "https://github.com"
   }

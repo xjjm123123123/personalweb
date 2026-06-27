@@ -1,6 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Fusion Pixel';
+  src: url('/fonts/fusion-pixel.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-brand-bg: #000000;
   --color-brand-card: #0A0A0A;
@@ -12,7 +20,7 @@
 
   --font-sans: "Satoshi", system-ui, sans-serif;
   --font-display: "Cabinet Grotesk", system-ui, sans-serif;
-  --font-pixel: "VT323", monospace;
+  --font-pixel: "Fusion Pixel", "VT323", monospace;
 }
 
 @layer base {
@@ -21,6 +29,10 @@
     color: var(--color-brand-text);
     color-scheme: dark;
     font-family: var(--font-sans);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {

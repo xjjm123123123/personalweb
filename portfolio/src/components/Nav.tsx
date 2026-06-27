@@ -40,6 +40,16 @@ export function Nav() {
     { id: "contact", label: "CONTACT" },
   ];
 
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+      // Update URL hash without jumping
+      window.history.pushState(null, "", `#${id}`);
+    }
+  };
+
   return (
     <>
       <div
@@ -69,6 +79,7 @@ export function Nav() {
                 <a
                   key={link.id}
                   href={`#${link.id}`}
+                  onClick={(e) => handleNavClick(e, link.id)}
                   className={`inline-block font-display text-[11px] font-black uppercase tracking-[0.25em] hover:text-white transition-all duration-500 ${textClass}`}
                 >
                   {link.label}

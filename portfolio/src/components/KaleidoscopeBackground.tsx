@@ -12,7 +12,7 @@ export function KaleidoscopeBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d", { alpha: false });
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
     const state = {
@@ -77,8 +77,7 @@ export function KaleidoscopeBackground() {
       const cy = height / 2;
       const radius = Math.hypot(width, height);
 
-      ctx!.fillStyle = "#050506";
-      ctx!.fillRect(0, 0, width, height);
+      ctx!.clearRect(0, 0, width, height);
       ctx!.save();
       ctx!.translate(cx, cy);
 
@@ -132,8 +131,7 @@ export function KaleidoscopeBackground() {
         (Math.cos(state.time * 0.23) + Math.sin(state.time * 0.47 + 0.8) * 0.5) * height * 0.038 +
         state.mouseY * height * 0.06 * (1.05 - mouseBreath * 0.32);
 
-      ctx!.fillStyle = "#050506";
-      ctx!.fillRect(0, 0, width, height);
+      ctx!.clearRect(0, 0, width, height);
 
       for (let i = 0; i < segments; i += 1) {
         ctx!.save();
@@ -155,27 +153,21 @@ export function KaleidoscopeBackground() {
         ctx!.rotate(-rotation * 0.55 + Math.sin(state.time * 0.15 + Math.sin(state.time * 0.29)) * 0.12);
         ctx!.translate(driftX, driftY);
         ctx!.scale(scale, scale);
+        ctx!.filter = "brightness(1.12) saturate(1.08) sepia(0.08) hue-rotate(-4deg)";
         ctx!.drawImage(image, -image.width / 2, -image.height / 2);
+        ctx!.filter = "none";
         ctx!.restore();
       }
 
       ctx!.save();
-      ctx!.globalCompositeOperation = "screen";
-      const glow = ctx!.createRadialGradient(cx, cy, radius * 0.04, cx, cy, radius * 0.52);
-      glow.addColorStop(0, "rgba(255,255,255,0.20)");
-      glow.addColorStop(0.42, "rgba(255,255,255,0.05)");
-      glow.addColorStop(1, "rgba(0,0,0,0)");
-      ctx!.fillStyle = glow;
-      ctx!.fillRect(0, 0, width, height);
-      ctx!.restore();
-
-      ctx!.save();
-      ctx!.globalCompositeOperation = "multiply";
-      // 增加暗角（Vignette）的覆盖范围和不透明度
-      const vignette = ctx!.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius * 0.65);
-      vignette.addColorStop(0, "rgba(255,255,255,1)");
-      vignette.addColorStop(1, "rgba(0,0,0,0.65)");
-      ctx!.fillStyle = vignette;
+      ctx!.globalCompositeOperation = "destination-in";
+      const maskRadius = Math.min(width, height) * 0.5;
+      const opacityMask = ctx!.createRadialGradient(cx, cy, maskRadius * 0.08, cx, cy, maskRadius);
+      opacityMask.addColorStop(0, "rgba(255,255,255,1)");
+      opacityMask.addColorStop(0.45, "rgba(255,255,255,0.82)");
+      opacityMask.addColorStop(0.78, "rgba(255,255,255,0.26)");
+      opacityMask.addColorStop(1, "rgba(255,255,255,0)");
+      ctx!.fillStyle = opacityMask;
       ctx!.fillRect(0, 0, width, height);
       ctx!.restore();
     }
@@ -303,22 +295,30 @@ export function KaleidoscopeBackground() {
           }
         }
       `}</style>
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block bg-[#050506]" style={{ imageRendering: 'pixelated' }} />
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" style={{ imageRendering: 'pixelated' }} />
 
-      {/* 流星雨层：放在背景画布之上，但在纹理和蒙版之下 */}
-      <MeteorShower />
+      {/* 流星雨层：跟随万花筒透明边界，避免边缘残留 */}
+      <div
+        className="absolute inset-0 z-[1] pointer-events-none"
+        style={{
+          maskImage: 'radial-gradient(circle closest-side at center, rgba(255,255,255,1) 0%, rgba(255,255,255,0.82) 45%, rgba(255,255,255,0.26) 78%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(circle closest-side at center, rgba(255,255,255,1) 0%, rgba(255,255,255,0.82) 45%, rgba(255,255,255,0.26) 78%, transparent 100%)',
+        }}
+      >
+        <MeteorShower />
+      </div>
 
-      {/* 像素化 Dither 纹理叠加（纯 CSS 实现，复古质感），同时调低透明度让底图更亮 */}
+      {/* 像素化 Dither 纹理叠加；和万花筒使用同样的径向透明边界 */}
       <div
         className="absolute inset-0 z-[2] pointer-events-none mix-blend-overlay opacity-25"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 2 2' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.15)'/%3E%3Crect x='1' y='1' width='1' height='1' fill='rgba(255,255,255,0.15)'/%3E%3Crect x='1' y='0' width='1' height='1' fill='rgba(0,0,0,0.15)'/%3E%3Crect x='0' y='1' width='1' height='1' fill='rgba(0,0,0,0.15)'/%3E%3C/svg%3E")`,
           backgroundSize: '6px 6px',
+          maskImage: 'radial-gradient(circle closest-side at center, rgba(255,255,255,1) 0%, rgba(255,255,255,0.82) 45%, rgba(255,255,255,0.26) 78%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(circle closest-side at center, rgba(255,255,255,1) 0%, rgba(255,255,255,0.82) 45%, rgba(255,255,255,0.26) 78%, transparent 100%)',
         }}
       />
 
-      {/* 自定义径向遮罩：把中心保留，但周围和边缘的黑色显著加深 */}
-      <div className="absolute inset-0 z-[3] pointer-events-none bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.75)_40%,rgba(0,0,0,0.95)_100%)]" />
     </div>
   );
 }

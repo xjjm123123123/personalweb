@@ -384,10 +384,10 @@ export function ThreePixelStarField() {
     }
 
     function setupScroll(material: THREE.ShaderMaterial, particles: THREE.Points) {
-      // 绑定到 #about 模块，滑动到 about 时形变恰好完成
-      const aboutSection = document.querySelector('#about');
-      const triggerOpts = aboutSection
-        ? { trigger: aboutSection, start: "top bottom", end: "top top" }
+      // 绑定到 hero：万花筒所在首屏完全滚出视口时，人物粒子聚合完成
+      const heroSection = document.querySelector('#hero');
+      const triggerOpts = heroSection
+        ? { trigger: heroSection, start: "top top", end: "bottom top" }
         : { trigger: document.body, start: "top top", end: "bottom bottom" };
 
       const st1 = ScrollTrigger.create({
