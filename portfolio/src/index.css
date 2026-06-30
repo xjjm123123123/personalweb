@@ -23,6 +23,10 @@
   --font-pixel: "Fusion Pixel", "VT323", monospace;
 }
 
+* {
+  cursor: none !important;
+}
+
 @layer base {
   :root {
     background-color: var(--color-brand-bg);

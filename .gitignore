@@ -1,0 +1,8 @@
+# Local OS files
+.DS_Store
+
+# Local runtime/tooling installed only for this machine
+.tools/
+
+# Local Trae skill artifacts
+.trae/skills/

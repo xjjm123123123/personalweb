@@ -42,7 +42,7 @@ export function Experience() {
   }, [experience.length]);
 
   return (
-    <section id="experience" className="py-32 w-full bg-brand-bg relative">
+    <section id="experience" className="py-32 w-full bg-transparent relative">
       <div className="mx-auto max-w-5xl px-6 lg:px-8">
         <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white mb-24 text-center">
           经历与成长

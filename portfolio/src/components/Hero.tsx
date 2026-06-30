@@ -1,7 +1,6 @@
 import { useRef, useState, useLayoutEffect } from "react";
 import { KaleidoscopeBackground } from "./KaleidoscopeBackground";
 import OrbitalCircularText from "./OrbitalCircularText";
-import { ThreePixelStarField } from "./ThreePixelStarField";
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -158,9 +157,6 @@ export function Hero() {
       }}
     >
       <KaleidoscopeBackground />
-
-      {/* 3D Pixel Star Field - Fixed background */}
-      <ThreePixelStarField />
 
       <div className="absolute inset-0 z-10 pointer-events-none mix-blend-difference">
         {/* Orbital Circular Stage */}
