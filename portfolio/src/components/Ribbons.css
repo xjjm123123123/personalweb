@@ -15,87 +15,58 @@ body.hide-ribbons .ribbons-container {
 }
 
 .pixel-cursor {
-  --cursor-fill: #ffffff;
-  --cursor-glow: rgba(255, 255, 255, 0.52);
+  --cursor-fill: rgba(255, 255, 255, 0.82);
+  --cursor-ring: rgba(255, 255, 255, 0.22);
+  --cursor-glow: rgba(139, 124, 255, 0.34);
   --cursor-x: -80px;
   --cursor-y: -80px;
   position: absolute;
   left: 0;
   top: 0;
-  width: 28px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   pointer-events: none;
   opacity: 0;
   z-index: 2;
-  transform: translate3d(var(--cursor-x), var(--cursor-y), 0);
+  transform: translate3d(calc(var(--cursor-x) - 50%), calc(var(--cursor-y) - 50%), 0);
   filter:
-    drop-shadow(0 0 3px var(--cursor-glow))
-    drop-shadow(0 0 10px var(--cursor-glow));
-  transition: opacity 120ms ease, filter 90ms ease;
-  will-change: transform, opacity;
+    drop-shadow(0 0 6px var(--cursor-glow))
+    drop-shadow(0 0 16px var(--cursor-glow));
+  transition: opacity 120ms ease, filter 120ms ease, transform 120ms ease;
+  will-change: transform, opacity, filter;
   isolation: isolate;
+  mix-blend-mode: screen;
 }
 
 .pixel-cursor.is-visible {
-  opacity: 1;
+  opacity: 0.95;
 }
 
 .pixel-cursor.is-pressing {
-  --cursor-fill: #8b7cff;
-  --cursor-glow: rgba(139, 124, 255, 0.72);
+  --cursor-fill: rgba(139, 124, 255, 0.92);
+  --cursor-ring: rgba(139, 124, 255, 0.28);
+  --cursor-glow: rgba(139, 124, 255, 0.52);
+  transform: translate3d(calc(var(--cursor-x) - 50%), calc(var(--cursor-y) - 50%), 0) scale(0.92);
 }
 
 .pixel-cursor::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 4px;
-  height: 4px;
-  background: var(--cursor-fill);
-  z-index: 1;
+  inset: 7px;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--cursor-fill) 0%, rgba(255, 255, 255, 0.12) 65%, transparent 100%);
   box-shadow:
-    0 0 0 var(--cursor-fill),
-    0 4px 0 var(--cursor-fill),
-    4px 4px 0 var(--cursor-fill),
-    0 8px 0 var(--cursor-fill),
-    4px 8px 0 var(--cursor-fill),
-    8px 8px 0 var(--cursor-fill),
-    0 12px 0 var(--cursor-fill),
-    4px 12px 0 var(--cursor-fill),
-    8px 12px 0 var(--cursor-fill),
-    12px 12px 0 var(--cursor-fill),
-    0 16px 0 var(--cursor-fill),
-    4px 16px 0 var(--cursor-fill),
-    8px 16px 0 var(--cursor-fill),
-    0 20px 0 var(--cursor-fill),
-    4px 20px 0 var(--cursor-fill),
-    8px 20px 0 var(--cursor-fill),
-    12px 20px 0 var(--cursor-fill),
-    0 24px 0 var(--cursor-fill),
-    4px 24px 0 var(--cursor-fill),
-    16px 24px 0 var(--cursor-fill),
-    0 28px 0 var(--cursor-fill),
-    20px 28px 0 var(--cursor-fill);
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 18px var(--cursor-glow);
 }
 
 .pixel-cursor::after {
   content: "";
   position: absolute;
-  left: -4px;
-  top: -4px;
-  width: 4px;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.86);
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid var(--cursor-ring);
   box-shadow:
-    4px 0 0 rgba(0, 0, 0, 0.86),
-    4px 4px 0 rgba(0, 0, 0, 0.86),
-    8px 8px 0 rgba(0, 0, 0, 0.86),
-    12px 12px 0 rgba(0, 0, 0, 0.86),
-    16px 16px 0 rgba(0, 0, 0, 0.86),
-    12px 20px 0 rgba(0, 0, 0, 0.86),
-    16px 20px 0 rgba(0, 0, 0, 0.86),
-    20px 24px 0 rgba(0, 0, 0, 0.86),
-    24px 28px 0 rgba(0, 0, 0, 0.86);
-  z-index: 0;
+    inset 0 0 24px rgba(255, 255, 255, 0.04),
+    0 0 24px rgba(255, 255, 255, 0.05);
 }

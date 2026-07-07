@@ -60,11 +60,10 @@ export function About() {
       className="min-h-[112vh] md:min-h-[118vh] w-full relative z-10 pointer-events-none"
     >
       <div className="sticky top-0 h-screen w-full flex items-center justify-start px-6 md:px-16 lg:px-24 pointer-events-none overflow-hidden">
-        
         {/* Left side content panel - Editorial Split Layout */}
         <div 
           ref={contentRef}
-          className="w-full max-w-xl flex flex-col justify-center text-brand-text pointer-events-auto h-full py-20"
+          className="w-full max-w-2xl flex flex-col justify-center text-brand-text pointer-events-auto h-full py-20"
         >
           
           {/* Header Area */}

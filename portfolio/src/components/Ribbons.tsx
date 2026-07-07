@@ -6,6 +6,14 @@ const Ribbons = () => {
   const pixelCursorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const supportsDecorativeCursor =
+      typeof window !== 'undefined'
+      && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    if (!supportsDecorativeCursor) {
+      return;
+    }
+
     function updateCursor(x: number, y: number) {
       const cursor = pixelCursorRef.current;
       if (!cursor) return;

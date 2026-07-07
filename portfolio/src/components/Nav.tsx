@@ -16,21 +16,30 @@ export function Nav() {
   }, [scrollY]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        });
-      },
-      { rootMargin: "-40% 0px -40% 0px" }
-    );
+    const updateActiveSection = () => {
+      if (window.scrollY < 100) {
+        setActiveSection("");
+        return;
+      }
 
-    const sections = document.querySelectorAll("section[id]");
-    sections.forEach((section) => observer.observe(section));
+      const viewportCenter = window.innerHeight * 0.5;
+      const sections = Array.from(document.querySelectorAll<HTMLElement>("section[id]"));
+      const current = sections.find((section) => {
+        const rect = section.getBoundingClientRect();
+        return rect.top <= viewportCenter && rect.bottom >= viewportCenter;
+      });
 
-    return () => observer.disconnect();
+      setActiveSection(current?.id ?? "");
+    };
+
+    updateActiveSection();
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
   }, []);
 
   const navLinks = [
@@ -52,15 +61,22 @@ export function Nav() {
 
   return (
     <>
+      <style>{`
+        body.gallery-open .global-nav {
+          opacity: 0 !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
+      `}</style>
       <div
-        className={`fixed top-0 left-0 right-0 h-48 z-40 pointer-events-none bg-gradient-to-b from-black/90 via-black/30 to-transparent transition-opacity duration-700 ${scrolled ? 'opacity-100' : 'opacity-0'}`}
+        className={`global-nav fixed top-0 left-0 right-0 h-48 z-40 pointer-events-none bg-gradient-to-b from-black/90 via-black/30 to-transparent transition-all duration-700 ${scrolled ? 'opacity-100' : 'opacity-0'}`}
       />
 
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full px-4 pointer-events-none"
+        className="global-nav fixed top-0 left-0 right-0 z-50 flex justify-center w-full px-4 pointer-events-none transition-all duration-500"
       >
         <div className="pointer-events-auto flex items-center justify-center py-8 w-full">
           <nav className="hidden md:flex items-center gap-24">

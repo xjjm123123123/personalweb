@@ -23,10 +23,6 @@
   --font-pixel: "Fusion Pixel", "VT323", monospace;
 }
 
-* {
-  cursor: none !important;
-}
-
 @layer base {
   :root {
     background-color: var(--color-brand-bg);
@@ -46,7 +42,31 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  body.gallery-open .app-starfield-layer {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
   }
 }
