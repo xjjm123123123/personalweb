@@ -124,19 +124,7 @@ export function ThreePixelStarField() {
     const scrollTriggerInstances: ScrollTrigger[] = [];
     let cancelled = false;
 
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetX = 0;
-    let targetY = 0;
-    let currentMouseForce = 0;
-    let targetMouseForce = 0;
-    let hasMouse = 0;
-    const ndcMouse = new THREE.Vector2(-1000, -1000);
-    const raycaster = new THREE.Raycaster();
     const lookAtTarget = new THREE.Vector3(0, 0, 0);
-    const personScreenCenter = new THREE.Vector3();
-    const aboutSection = document.querySelector('#about');
-    let ribbonsHiddenForPerson = false;
 
     const calculateLookAt = () => {
       if (window.innerWidth < 768) {
@@ -155,48 +143,7 @@ export function ThreePixelStarField() {
     };
 
     lookAtTarget.x = calculateLookAt();
-
-    const setRibbonsHiddenForPerson = (hidden: boolean) => {
-      if (ribbonsHiddenForPerson === hidden) return;
-      ribbonsHiddenForPerson = hidden;
-      document.body.classList.toggle('hide-ribbons', hidden);
-    };
-
-    const setMousePosition = (clientX: number, clientY: number) => {
-      mouseX = clientX - window.innerWidth / 2;
-      mouseY = clientY - window.innerHeight / 2;
-
-      ndcMouse.x = (clientX / window.innerWidth) * 2 - 1;
-      ndcMouse.y = -(clientY / window.innerHeight) * 2 + 1;
-
-      hasMouse = 1;
-      targetMouseForce = 1.0; // 鼠标移动时产生扰动力度
-    };
-
-    const onMouseMove = (event: MouseEvent) => {
-      setMousePosition(event.clientX, event.clientY);
-    };
-
-    const onPointerMove = (event: PointerEvent) => {
-      setMousePosition(event.clientX, event.clientY);
-    };
-
-    const onPointerEnd = () => {
-      targetMouseForce = 0;
-    };
-
-    const onWindowBlur = () => {
-      hasMouse = 0;
-      targetMouseForce = 0;
-      setRibbonsHiddenForPerson(false);
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerdown", onPointerMove);
-    window.addEventListener("pointerup", onPointerEnd);
-    window.addEventListener("pointercancel", onPointerEnd);
-    window.addEventListener("blur", onWindowBlur);
+    document.body.classList.remove("hide-ribbons");
 
     const clock = new THREE.Clock();
 
@@ -305,11 +252,6 @@ export function ThreePixelStarField() {
         uniforms: {
           uProgress: { value: 0 },
           uTime: { value: 0 },
-          uRayOrigin: { value: new THREE.Vector3() },
-          uRayDirection: { value: new THREE.Vector3() },
-          uMouseNdc: { value: new THREE.Vector2(-1000, -1000) },
-          uMouseForce: { value: 0 },
-          uHasMouse: { value: 0 },
         },
         vertexShader: `
           attribute vec3 aTargetPosition;
@@ -325,11 +267,6 @@ export function ThreePixelStarField() {
           
           uniform float uProgress;
           uniform float uTime;
-          uniform vec3 uRayOrigin;
-          uniform vec3 uRayDirection;
-          uniform vec2 uMouseNdc;
-          uniform float uMouseForce;
-          uniform float uHasMouse;
 
           void main() {
             vColor = aColor;
@@ -365,48 +302,6 @@ export function ThreePixelStarField() {
             
             vec4 worldPos = modelMatrix * vec4(finalPosition, 1.0);
             vec3 worldPos3 = worldPos.xyz;
-            
-            // 首页星场阶段粒子很分散，用屏幕空间距离来保证光标附近的星点也会被扰动。
-            vec4 screenViewPosition = viewMatrix * vec4(worldPos3, 1.0);
-            vec4 screenProjectedPosition = projectionMatrix * screenViewPosition;
-            vec2 screenPos = screenProjectedPosition.xy / max(screenProjectedPosition.w, 0.0001);
-            vec2 screenDelta = screenPos - uMouseNdc;
-            float screenDist = length(screenDelta);
-            float screenRadius = 0.17;
-            float screenDisturbance = (1.0 - smoothstep(0.0, screenRadius, screenDist)) * uMouseForce * uHasMouse * (1.0 - p);
-
-            if (screenDisturbance > 0.001) {
-              float screenLen = max(length(screenDelta), 0.001);
-              vec2 screenPush = screenDelta / screenLen;
-              worldPos3.xy += screenPush * screenDisturbance * 3.0;
-              worldPos3.z += sin(uTime * 8.0 + worldPos3.x + worldPos3.y) * screenDisturbance * 0.55;
-            }
-
-            // 人态/聚合阶段继续使用 3D 射线扰动，贴合模型体积。
-            vec3 pToRay = worldPos3 - uRayOrigin;
-            vec3 crossProd = cross(pToRay, uRayDirection);
-            float distToRay = length(crossProd);
-            
-            float hoverRadius = mix(2.0, 1.2, p);
-            if (distToRay < hoverRadius) {
-              float disturbance = (1.0 - distToRay / hoverRadius);
-              disturbance = disturbance * disturbance; // 平滑衰减
-              disturbance *= uMouseForce; // 乘以鼠标力度，鼠标停止时自动恢复
-              disturbance *= mix(0.2, 1.0, p);
-              
-              vec3 closestPoint = uRayOrigin + dot(pToRay, uRayDirection) * uRayDirection;
-              vec3 pushDirection = worldPos3 - closestPoint;
-              float pushLen = length(pushDirection);
-              
-              if (pushLen > 0.001) {
-                pushDirection /= pushLen;
-                // 向外排斥 + 一点点随机浮动
-                float pushStrength = mix(1.8, 1.0, p);
-                worldPos3 += pushDirection * disturbance * pushStrength;
-                worldPos3.x += sin(uTime * 10.0 + worldPos3.y) * disturbance * 0.24;
-                worldPos3.y += cos(uTime * 10.0 + worldPos3.x) * disturbance * 0.24;
-              }
-            }
             
             vec4 viewPosition = viewMatrix * vec4(worldPos3, 1.0);
             vec4 projectedPosition = projectionMatrix * viewPosition;
@@ -480,38 +375,10 @@ export function ThreePixelStarField() {
 
       if (particlesMesh) {
         particlesMesh.rotation.y += 0.001; // 恢复围绕自身中心的缓慢旋转
-
-        targetX = mouseX * 0.002;
-        targetY = mouseY * 0.002;
-
-        camera.position.x += (targetX - camera.position.x) * 0.05;
-        camera.position.y += (-targetY - camera.position.y) * 0.05;
         camera.lookAt(lookAtTarget);
-
-        // 更新鼠标射线用于粒子扰动
-        raycaster.setFromCamera(ndcMouse, camera);
-
-        // 计算鼠标扰动力度的衰减与平滑恢复
-        targetMouseForce = Math.max(0, targetMouseForce - 0.05); // 快速衰减
-        currentMouseForce += (targetMouseForce - currentMouseForce) * 0.2; // 弹性平滑
 
         const material = particlesMesh.material as THREE.ShaderMaterial;
         material.uniforms.uTime.value = elapsed;
-        material.uniforms.uRayOrigin.value.copy(raycaster.ray.origin);
-        material.uniforms.uRayDirection.value.copy(raycaster.ray.direction);
-        material.uniforms.uMouseNdc.value.copy(ndcMouse);
-        material.uniforms.uMouseForce.value = currentMouseForce;
-        material.uniforms.uHasMouse.value = hasMouse;
-
-          const progress = material.uniforms.uProgress.value as number;
-          const aboutRect = aboutSection?.getBoundingClientRect();
-          const aboutVisible = aboutRect ? aboutRect.top < window.innerHeight && aboutRect.bottom > 0 : true;
-
-          personScreenCenter.set(0, 0, 0).project(camera);
-          const dx = (ndcMouse.x - personScreenCenter.x) / 0.34;
-          const dy = (ndcMouse.y - personScreenCenter.y) / 0.54;
-          const hoveringPerson = hasMouse === 1 && progress > 0.72 && aboutVisible && (dx * dx + dy * dy < 1);
-          setRibbonsHiddenForPerson(hoveringPerson);
       }
 
       renderer.render(scene, camera);
@@ -530,13 +397,7 @@ export function ThreePixelStarField() {
     return () => {
       cancelled = true;
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerdown", onPointerMove);
-      window.removeEventListener("pointerup", onPointerEnd);
-      window.removeEventListener("pointercancel", onPointerEnd);
-      window.removeEventListener("blur", onWindowBlur);
-      setRibbonsHiddenForPerson(false);
+      document.body.classList.remove("hide-ribbons");
       cancelAnimationFrame(animationFrameId);
       scrollTriggerInstances.forEach(st => st.kill());
       if (particlesMesh) {

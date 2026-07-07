@@ -70,7 +70,8 @@ export function About() {
           <div className="reveal-item mb-4">
             <Shuffle
               text="XuJiaming"
-              className="text-3xl md:text-5xl font-bold tracking-widest mb-2 font-pixel uppercase leading-none"
+              className="relative z-10 mb-2 pb-1 text-3xl font-bold tracking-widest font-pixel uppercase leading-[1.08] md:text-5xl"
+              style={{ visibility: "visible" }}
               shuffleDirection="right"
               duration={0.35}
               animationMode="evenodd"

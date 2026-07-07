@@ -1,10 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
-import { basename, resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { basename, extname, resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 import { projectArchiveSeedByCategory } from "../src/data/projectArchiveSeed.js";
 
 const ENV_PATH = resolve(process.cwd(), ".env");
 const PUBLIC_DIR = resolve(process.cwd(), "public");
+const DETAIL_WATERMARK_VERSION = "bananacat-v1";
 
 function getStorageBucket() {
   return process.env.SUPABASE_ASSETS_BUCKET || "portfolio-assets";
@@ -57,16 +60,90 @@ function getContentType(assetPath) {
   return "application/octet-stream";
 }
 
+function getSafeAssetName(assetPath) {
+  const rawName = basename(assetPath, extname(assetPath));
+  return rawName
+    .normalize("NFKD")
+    .replace(/[^\w\u4e00-\u9fff@-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .toLowerCase();
+}
+
+function getAssetHash(assetPath, salt = "") {
+  const localAssetPath = getLocalAssetPath(assetPath);
+  return createHash("sha1")
+    .update(readFileSync(localAssetPath))
+    .update(salt)
+    .digest("hex")
+    .slice(0, 10);
+}
+
+function getDetailHashSourcePath(assetPath) {
+  return assetPath.replace(/@2x(?=\.[^.]+$)/i, "");
+}
+
 function getDetailObjectPath(project, assetPath) {
-  return `projects/${project.slug}/details/${basename(assetPath)}`;
+  const safeName = getSafeAssetName(assetPath);
+  const hash = getAssetHash(getDetailHashSourcePath(assetPath), DETAIL_WATERMARK_VERSION);
+
+  return `projects/${project.slug}/details/${safeName || "detail"}-${hash}.jpg`;
 }
 
 function getCoverObjectPath(project, assetPath) {
-  if ((project.detailImages ?? []).includes(assetPath)) {
-    return getDetailObjectPath(project, assetPath);
-  }
+  const hash = getAssetHash(assetPath);
+  const safeName = getSafeAssetName(assetPath).replace(/@/g, "-");
 
-  return `projects/${project.slug}/cover/${basename(assetPath)}`;
+  return `projects/${project.slug}/cover/${safeName || "cover"}-${hash}.jpg`;
+}
+
+function createCoverThumbnailBuffer(assetPath) {
+  const sourcePath = getLocalAssetPath(assetPath);
+  return sharp(sourcePath)
+    .rotate()
+    .resize({ width: 960, withoutEnlargement: true })
+    .jpeg({ quality: 78, mozjpeg: true })
+    .toBuffer();
+}
+
+function escapeSvgText(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function createWatermarkSvg(width, height) {
+  const fontSize = Math.max(18, Math.round(width / 95));
+  const patternWidth = fontSize * 18;
+  const patternHeight = fontSize * 7;
+  const text = escapeSvgText("bananacat");
+
+  return Buffer.from(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <defs>
+        <pattern id="watermark" width="${patternWidth}" height="${patternHeight}" patternUnits="userSpaceOnUse" patternTransform="rotate(-15)">
+          <text x="${fontSize}" y="${fontSize * 3.2}" font-family="Menlo, Monaco, monospace" font-size="${fontSize}" font-weight="700" letter-spacing="${fontSize * 0.18}" fill="#000000" fill-opacity="0.16">${text}</text>
+          <text x="${fontSize - 1}" y="${fontSize * 3.2 - 1}" font-family="Menlo, Monaco, monospace" font-size="${fontSize}" font-weight="700" letter-spacing="${fontSize * 0.18}" fill="#ffffff" fill-opacity="0.22">${text}</text>
+        </pattern>
+      </defs>
+      <rect width="${width}" height="${height}" fill="url(#watermark)" />
+    </svg>
+  `);
+}
+
+async function createWatermarkedDetailBuffer(assetPath) {
+  const sourcePath = getLocalAssetPath(assetPath);
+  const image = sharp(sourcePath).rotate();
+  const metadata = await image.metadata();
+  const width = metadata.width ?? 1800;
+  const height = metadata.height ?? 636;
+
+  return image
+    .composite([{ input: createWatermarkSvg(width, height), blend: "over" }])
+    .jpeg({ quality: 88, mozjpeg: true })
+    .toBuffer();
 }
 
 function buildStoragePlan() {
@@ -74,19 +151,28 @@ function buildStoragePlan() {
 
   for (const project of Object.values(projectArchiveSeedByCategory).flat()) {
     if (project.coverImage && isLocalPublicAssetPath(project.coverImage)) {
-      uploads.set(getCoverObjectPath(project, project.coverImage), project.coverImage);
+      uploads.set(getCoverObjectPath(project, project.coverImage), {
+        assetPath: project.coverImage,
+        kind: "cover",
+      });
     }
 
     for (const imagePath of project.detailImages ?? []) {
       if (!isLocalPublicAssetPath(imagePath)) continue;
 
       const objectPath = getDetailObjectPath(project, imagePath);
-      uploads.set(objectPath, imagePath);
+      uploads.set(objectPath, {
+        assetPath: imagePath,
+        kind: "detail",
+      });
 
       if (/\.jpg$/i.test(imagePath)) {
         const retinaPath = imagePath.replace(/\.jpg$/i, "@2x.jpg");
         if (existsSync(getLocalAssetPath(retinaPath))) {
-          uploads.set(getDetailObjectPath(project, retinaPath), retinaPath);
+          uploads.set(getDetailObjectPath(project, retinaPath), {
+            assetPath: retinaPath,
+            kind: "detail",
+          });
         }
       }
     }
@@ -161,17 +247,20 @@ async function uploadReferencedAssets(supabase) {
   const storageBucket = getStorageBucket();
   const storagePlan = buildStoragePlan();
 
-  for (const [objectPath, assetPath] of storagePlan.entries()) {
+  for (const [objectPath, upload] of storagePlan.entries()) {
+    const { assetPath, kind } = upload;
     const localAssetPath = getLocalAssetPath(assetPath);
     if (!existsSync(localAssetPath)) {
       throw new Error(`Missing local asset for storage sync: ${assetPath}`);
     }
 
-    const fileBuffer = readFileSync(localAssetPath);
+    const fileBuffer = kind === "cover"
+      ? await createCoverThumbnailBuffer(assetPath)
+      : await createWatermarkedDetailBuffer(assetPath);
     const { error } = await supabase.storage.from(storageBucket).upload(objectPath, fileBuffer, {
       upsert: true,
-      contentType: getContentType(assetPath),
-      cacheControl: "3600",
+      contentType: "image/jpeg",
+      cacheControl: kind === "cover" ? "3600" : "0",
     });
 
     if (error) {

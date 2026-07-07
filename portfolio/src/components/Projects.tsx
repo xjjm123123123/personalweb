@@ -58,7 +58,7 @@ const terrainVertexShader = `
 
     float distanceFade = clamp(18.0 / -mvPosition.z, 0.18, 1.35);
     float peakGlow = smoothstep(0.2, 4.2, aHeight);
-    gl_PointSize = (0.95 + peakGlow * 1.05 + aRand * 0.45) * distanceFade * uPixelRatio;
+    gl_PointSize = (1.08 + peakGlow * 1.18 + aRand * 0.5) * distanceFade * uPixelRatio;
     vAlpha = mix(0.05, 0.42, peakGlow) * (0.48 + aRand * 0.32);
   }
 `;

@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 
 const PORT = Number(process.env.PORT || process.env.PROJECTS_API_PORT || 8787);
 const ENV_PATH = resolve(process.cwd(), ".env");
+const API_RESPONSE_TTL_MS = 1000 * 60 * 5;
+const apiResponseCache = new Map();
 
 function getStorageBucket() {
   return process.env.SUPABASE_ASSETS_BUCKET || "portfolio-assets";
@@ -30,14 +32,41 @@ function loadLocalEnv() {
   }
 }
 
-function writeJson(res, statusCode, payload) {
+function writeJson(res, statusCode, payload, extraHeaders = {}) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": "http://localhost:5173",
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    ...extraHeaders,
   });
   res.end(JSON.stringify(payload));
+}
+
+function getCacheHeaders() {
+  return {
+    "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+    Vary: "Origin",
+  };
+}
+
+function getCachedProjects(cacheKey) {
+  const cached = apiResponseCache.get(cacheKey);
+  if (!cached) return null;
+
+  if (Date.now() - cached.updatedAt > API_RESPONSE_TTL_MS) {
+    apiResponseCache.delete(cacheKey);
+    return null;
+  }
+
+  return cached.projects;
+}
+
+function setCachedProjects(cacheKey, projects) {
+  apiResponseCache.set(cacheKey, {
+    projects,
+    updatedAt: Date.now(),
+  });
 }
 
 function toTextArray(value) {
@@ -197,10 +226,20 @@ const server = createServer(async (req, res) => {
   }
 
   try {
-    const projects = isArchiveProjectsApi
-      ? await fetchProjectArchive(category)
-      : await fetchProjects(category);
-    writeJson(res, 200, { projects });
+      const cacheKey = `${requestUrl.pathname}:${category}`;
+      const cachedProjects = getCachedProjects(cacheKey);
+
+      if (cachedProjects) {
+        writeJson(res, 200, { projects: cachedProjects }, getCacheHeaders());
+        return;
+      }
+
+      const projects = isArchiveProjectsApi
+        ? await fetchProjectArchive(category)
+        : await fetchProjects(category);
+
+      setCachedProjects(cacheKey, projects);
+      writeJson(res, 200, { projects }, getCacheHeaders());
   } catch (error) {
     writeJson(res, 500, {
       error: error instanceof Error ? error.message : "Unknown server error",

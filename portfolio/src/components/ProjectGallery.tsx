@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
-import { projectArchiveByCategory, type ArchiveProject } from "../data/projectArchive";
+import { useEffect, useRef, useState } from "react";
+import type { ArchiveProject } from "../data/projectArchive";
+import { getResponsiveProjectCover } from "../data/projectCoverAssets";
 
 interface ProjectGalleryProps {
   category: string | null;
@@ -10,32 +11,113 @@ interface ProjectGalleryProps {
   onClose: () => void;
 }
 
-function DetailImageWatermark() {
-  const watermarkItems = Array.from({ length: 24 });
+type ProjectRequestStatus = "idle" | "loading" | "ready" | "error";
+type ProjectImageStatus = "loading" | "loaded" | "error";
+
+const archiveCategoryCache = new Map<string, ArchiveProject[]>();
+
+function preloadImage(src: string) {
+  if (!src) return;
+
+  const image = new Image();
+  image.decoding = "async";
+  image.src = src;
+}
+
+function PixelLoader({
+  compact = false,
+  className = "",
+}: {
+  compact?: boolean;
+  className?: string;
+}) {
+  const pixels = Array.from({ length: compact ? 6 : 9 });
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-      <div className="absolute left-1/2 top-1/2 grid w-[155%] -translate-x-1/2 -translate-y-1/2 -rotate-12 grid-cols-3 gap-x-14 gap-y-11 opacity-42 mix-blend-difference md:grid-cols-4 md:gap-x-20 md:gap-y-14">
-        {watermarkItems.map((_, index) => (
-          <span
+    <div
+      className={`absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#050506]/92 backdrop-blur-[2px] ${className}`}
+    >
+      <div
+        className={`grid ${compact ? "grid-cols-3 gap-1.5" : "grid-cols-3 gap-2"} bg-transparent p-3`}
+      >
+        {pixels.map((_, index) => (
+          <motion.span
             key={index}
-            className="select-none whitespace-nowrap font-pixel text-[10px] uppercase tracking-[0.3em] text-white md:text-[11px]"
-          >
-            bananacat
-          </span>
-        ))}
-      </div>
-      <div className="absolute left-1/2 top-1/2 grid w-[155%] -translate-x-1/2 -translate-y-1/2 -rotate-12 grid-cols-3 gap-x-14 gap-y-11 opacity-12 md:grid-cols-4 md:gap-x-20 md:gap-y-14">
-        {watermarkItems.map((_, index) => (
-          <span
-            key={index}
-            className="select-none whitespace-nowrap font-pixel text-[10px] uppercase tracking-[0.3em] text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.62),0_0_8px_rgba(255,255,255,0.24)] md:text-[11px]"
-          >
-            bananacat
-          </span>
+            animate={{
+              opacity: [0.2, 1, 0.2],
+              scale: [1, 1.18, 1],
+            }}
+            transition={{
+              duration: 0.9,
+              ease: "easeInOut",
+              repeat: Number.POSITIVE_INFINITY,
+              delay: index * 0.06,
+            }}
+            className={`${compact ? "h-2.5 w-2.5" : "h-3.5 w-3.5"} rounded-[2px] bg-brand-primary shadow-[0_0_14px_rgba(122,86,255,0.45)]`}
+            style={{ imageRendering: "pixelated" }}
+          />
         ))}
       </div>
     </div>
+  );
+}
+
+function ProjectImage({
+  src,
+  srcSet,
+  sizes,
+  alt,
+  imgClassName,
+  priority = false,
+}: {
+  src?: string;
+  srcSet?: string;
+  sizes?: string;
+  alt: string;
+  imgClassName: string;
+  priority?: boolean;
+}) {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [status, setStatus] = useState<ProjectImageStatus>(src ? "loading" : "error");
+
+  useEffect(() => {
+    setStatus(src ? "loading" : "error");
+  }, [src, srcSet, sizes]);
+
+  useEffect(() => {
+    const image = imageRef.current;
+    if (!image || !src) return;
+
+    if (image.complete) {
+      setStatus(image.naturalWidth > 0 ? "loaded" : "error");
+    }
+  }, [src, srcSet, sizes]);
+
+  return (
+    <>
+      {src ? (
+        <img
+          ref={imageRef}
+          src={src}
+          srcSet={srcSet}
+          sizes={sizes}
+          alt={alt}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
+          onLoad={() => setStatus("loaded")}
+          onError={() => setStatus("error")}
+          className={`${imgClassName} transition-opacity duration-500 ${status === "loaded" ? "opacity-100" : "opacity-0"}`}
+        />
+      ) : null}
+
+      {status !== "loaded" && (
+        <PixelLoader
+          compact={status === "error"}
+          className={status === "error" ? "bg-[#050506]/96" : ""}
+        />
+      )}
+    </>
   );
 }
 
@@ -49,6 +131,7 @@ export function ProjectGallery({
   const [selectedProject, setSelectedProject] = useState<ArchiveProject | null>(null);
   const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
   const [projects, setProjects] = useState<ArchiveProject[]>([]);
+  const [projectsStatus, setProjectsStatus] = useState<ProjectRequestStatus>("idle");
   const isWebCategory = category === "Web";
   const isDetail = Boolean(selectedProject);
 
@@ -75,16 +158,21 @@ export function ProjectGallery({
 
     if (!category) {
       setProjects([]);
+      setProjectsStatus("idle");
       return () => {
         cancelled = true;
       };
     }
 
-    const fallbackProjects =
-      projectArchiveByCategory[category as keyof typeof projectArchiveByCategory] ?? [];
-    setProjects(fallbackProjects);
-
     const controller = new AbortController();
+    const cachedProjects = archiveCategoryCache.get(category);
+    if (cachedProjects) {
+      setProjects(cachedProjects);
+      setProjectsStatus("ready");
+    } else {
+      setProjects([]);
+      setProjectsStatus("loading");
+    }
 
     fetch(`/api/project-archive?category=${encodeURIComponent(category)}`, {
       signal: controller.signal,
@@ -100,18 +188,14 @@ export function ProjectGallery({
         if (cancelled) return;
 
         const nextProjects = Array.isArray(payload?.projects) ? payload.projects : [];
-        const fallbackSlugs = new Set(fallbackProjects.map((project) => project.slug));
-        const hasArchiveIdentityMatch =
-          fallbackSlugs.size === 0 ||
-          nextProjects.some((project: ArchiveProject) => fallbackSlugs.has(project.slug));
-
-        if (nextProjects.length > 0 && hasArchiveIdentityMatch) {
-          setProjects(nextProjects);
-        }
+        archiveCategoryCache.set(category, nextProjects);
+        setProjects(nextProjects);
+        setProjectsStatus("ready");
       })
       .catch(() => {
         if (!cancelled) {
-          setProjects(fallbackProjects);
+          setProjects([]);
+          setProjectsStatus("error");
         }
       });
 
@@ -120,6 +204,17 @@ export function ProjectGallery({
       controller.abort();
     };
   }, [category]);
+
+  useEffect(() => {
+    if (projects.length === 0) return;
+
+    projects
+      .slice(0, 3)
+      .forEach((project) => {
+        const coverAsset = getResponsiveProjectCover(project.coverImage);
+        if (coverAsset.src) preloadImage(coverAsset.src);
+      });
+  }, [projects]);
 
   useEffect(() => {
     if (!projectSlug) {
@@ -132,7 +227,15 @@ export function ProjectGallery({
   }, [projectSlug, projects]);
 
   useEffect(() => {
+    if (!selectedProject) return;
+
+    selectedProject.detailImages.slice(0, 2).forEach((image) => preloadImage(image));
+  }, [selectedProject]);
+
+  useEffect(() => {
     if (!previewImage) return;
+
+    preloadImage(previewImage.src);
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -170,6 +273,14 @@ export function ProjectGallery({
       return image.replace(/\.jpg$/i, "@2x.jpg");
     }
 
+    if (/\/details\/page-\d{2}\.jpg$/i.test(image)) {
+      return image.replace(/\.jpg$/i, "@2x.jpg");
+    }
+
+    if (/\/details\/page-\d{2}-[a-f0-9]{10}\.jpg$/i.test(image)) {
+      return image.replace(/(\/details\/page-\d{2})(-[a-f0-9]{10}\.jpg)$/i, "$1@2x$2");
+    }
+
     return image;
   };
 
@@ -192,11 +303,7 @@ export function ProjectGallery({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(40,40,50,0.4)_0%,#050506_60%)] pointer-events-none" />
 
           <div
-            className={`z-[999999] flex items-center justify-between px-6 py-6 md:px-12 md:py-8 pointer-events-none ${
-              isDetail
-                ? "sticky top-0 bg-[#050506]/88 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_24px_80px_rgba(5,5,6,0.72)]"
-                : "relative"
-            }`}
+            className="sticky top-0 z-[999999] flex items-center justify-between px-6 py-6 md:px-12 md:py-8 pointer-events-none bg-[#050506]/88 backdrop-blur-2xl border-b border-white/[0.06] shadow-[0_24px_80px_rgba(5,5,6,0.72)]"
           >
             <div
               className={`font-pixel text-[10px] uppercase tracking-[0.2em] ${
@@ -236,7 +343,7 @@ export function ProjectGallery({
 
           <div
             className={`relative z-10 mx-auto max-w-7xl px-6 md:px-12 pb-32 ${
-              isDetail ? "pt-4 md:pt-8" : "pt-12 md:pt-24"
+              isDetail ? "pt-10 md:pt-12" : "pt-14 md:pt-20"
             }`}
           >
             {!isDetail && (
@@ -257,7 +364,10 @@ export function ProjectGallery({
 
             {!selectedProject && projects.length > 0 && (
               <div className="flex flex-wrap items-start gap-4 md:gap-6">
-                {projects.map((project, index) => (
+                {projects.map((project, index) => {
+                  const coverAsset = getResponsiveProjectCover(project.coverImage);
+
+                  return (
                   <motion.button
                     type="button"
                     key={project.slug}
@@ -268,15 +378,16 @@ export function ProjectGallery({
                     style={getCardStyle(project)}
                     className="group relative h-[320px] w-full overflow-hidden rounded-2xl border border-transparent bg-white/5 text-left cursor-pointer md:h-[420px] md:flex-none"
                   >
-                    {project.coverImage ? (
-                      <img
-                        src={project.coverImage}
+                    <div className="absolute inset-0 overflow-hidden">
+                      <ProjectImage
+                        src={coverAsset.src}
+                        srcSet={coverAsset.srcSet}
+                        sizes={coverAsset.sizes}
                         alt={project.title}
-                        className="absolute inset-0 h-full w-full object-cover object-right transition-transform duration-1000 ease-out group-hover:scale-105 opacity-65 group-hover:opacity-100"
+                        priority={index < 2}
+                        imgClassName="absolute inset-0 h-full w-full object-cover object-right transition-transform duration-1000 ease-out group-hover:scale-105 opacity-65 group-hover:opacity-100"
                       />
-                    ) : (
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(122,86,255,0.22)_0%,rgba(12,12,18,0.12)_38%,rgba(5,5,6,0.96)_100%)]" />
-                    )}
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-[#050506]/55 to-[#050506]/10 opacity-95 transition-opacity duration-700 group-hover:opacity-75" />
 
                     <div className="absolute inset-0 p-8 md:p-10 flex flex-col justify-end">
@@ -309,12 +420,45 @@ export function ProjectGallery({
                         </div>
                       </div>
                     </div>
-                  </motion.button>
-                ))}
+                    </motion.button>
+                  );
+                })}
               </div>
             )}
 
-            {!selectedProject && projects.length === 0 && (
+            {!selectedProject && projectsStatus === "loading" && (
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-[2rem] border border-white/10 bg-white/[0.04] px-8 py-18 md:px-12 md:py-24"
+              >
+                <div className="flex flex-col items-center justify-center gap-6 text-center">
+                    <PixelLoader className="static bg-transparent backdrop-blur-0" />
+                  <p className="max-w-2xl text-white/58 leading-7">
+                    正在从项目档案中拉取图片和详情页资源。
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {!selectedProject && projectsStatus === "error" && (
+              <motion.div
+                initial={{ opacity: 0, y: 32 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-[2rem] border border-white/10 bg-white/[0.04] px-8 py-14 md:px-12 md:py-16"
+              >
+                <div className="font-display text-[2rem] md:text-[3rem] font-bold text-white tracking-tight">
+                  项目档案暂时没有返回成功。
+                </div>
+                <p className="mt-4 max-w-2xl text-white/65 leading-7">
+                  当前不再回退到本地写死的项目图。接口恢复后，这里会直接展示服务端返回的封面和详情页。
+                </p>
+              </motion.div>
+            )}
+
+            {!selectedProject && projectsStatus === "ready" && projects.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 32 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -393,12 +537,13 @@ export function ProjectGallery({
                           className="group relative block w-full overflow-hidden text-left"
                           aria-label={`放大查看 ${selectedProject.title} detail ${index + 1}`}
                         >
-                          <img
-                            src={image}
-                            alt={`${selectedProject.title} detail ${index + 1}`}
-                            className="block w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.015]"
-                          />
-                          <DetailImageWatermark />
+                          <div className="relative min-h-[16rem] overflow-hidden">
+                            <ProjectImage
+                              src={image}
+                              alt={`${selectedProject.title} detail ${index + 1}`}
+                              imgClassName="block w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.015]"
+                            />
+                          </div>
                         </button>
                       </motion.div>
                     ))}
@@ -448,12 +593,14 @@ export function ProjectGallery({
                   onClick={(event) => event.stopPropagation()}
                   className="relative max-h-[88dvh] max-w-[96vw] overflow-hidden rounded-[1.25rem] border border-white/12 shadow-[0_30px_120px_rgba(0,0,0,0.75)] md:max-h-[90dvh] md:max-w-[92vw]"
                 >
-                  <img
-                    src={previewImage.src}
-                    alt={previewImage.alt}
-                    className="block max-h-[88dvh] max-w-[96vw] object-contain md:max-h-[90dvh] md:max-w-[92vw]"
-                  />
-                  <DetailImageWatermark />
+                  <div className="relative min-h-[50vh] min-w-[60vw] max-h-[88dvh] max-w-[96vw] md:max-h-[90dvh] md:max-w-[92vw]">
+                    <ProjectImage
+                      src={previewImage.src}
+                      alt={previewImage.alt}
+                      priority
+                      imgClassName="block max-h-[88dvh] max-w-[96vw] object-contain md:max-h-[90dvh] md:max-w-[92vw]"
+                    />
+                  </div>
                 </motion.div>
               </motion.div>
             )}

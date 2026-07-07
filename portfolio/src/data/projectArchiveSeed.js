@@ -10,8 +10,8 @@ export const projectArchiveSeedByCategory = {
       year: "2025",
       title: "果课帮",
       summary:
-        "面向教育场景的数字产品项目，围绕 AI Agent、OCR、流程设计、后台系统、APP 端体验和运营链路展开。按你的分类口径，这里归入 Agent。",
-      coverImage: page(8),
+        "通过上海畅学教育科技有限公司提供的AIGC+智慧教学平台和智能体开发工具，开发了一个专注于初中物理教学的专业小模型。该模型可调节智能体参数并输入知识库，优化系统提示词和模型关键词，确保教学的全流程实施，并具备丰富的教学功能，专注于物理学科的深度知识。作品结合AIGC+平台、COZE、figma、python等技术，构建了一个完善的AI辅助初中物理学习平台。",
+      coverImage: "/image/Group 37427.png",
       detailImages: [page(8), page(9), page(10), page(11), page(12), page(13), page(14)],
       tags: ["EdTech", "AI Agent", "OCR"],
       sortOrder: 10,
@@ -25,8 +25,8 @@ export const projectArchiveSeedByCategory = {
       year: "2024",
       title: "塑料海洋",
       summary:
-        "以海洋塑料污染为主题的沉浸式 VR 体验项目，围绕场景叙事、交互流程、视觉设定和 Unity 开发实现展开，作品页覆盖系统设计、关卡体验与效果展示。",
-      coverImage: page(3),
+        "本项目基于联合国可持续发展目标（SDG 14），设计一款面向虚拟现实晕动症患者的海底环保教育游戏。通过在关键交互中植入静态射频元素，缓解用户在运动场景中的眩晕不适。玩家将以清洁者身份深入未来污染海洋，完成生态修复任务，寓教于乐，探索VR技术在健康适配与可持续教育中的融合创新。",
+      coverImage: "/image/Mask group.png",
       detailImages: [page(3), page(4), page(5), page(6), page(7)],
       tags: ["Unity", "VR", "交互设计"],
       sortOrder: 10,
@@ -38,7 +38,7 @@ export const projectArchiveSeedByCategory = {
       year: "2025",
       title: "东坡幻境",
       summary:
-        "基于 Unity 的东方题材飞行 VR 项目，内容包含视觉概念、玩法设计、特效与 UI、开发流程、实现细节和用户测试，属于完整的沉浸式作品集章节。",
+        "本项目以北宋文学巨匠苏轼为核心人物，运用虚拟现实(VR)技术与人工智能(AI)手段，构建一个沉浸式、多维度的数字文化体验平台。通过整合苏轼的诗词、书法与哲学思想，实现互动化、可视化的数字再现，让用户“身临其境”地感受苏轼的文化魅力。",
       coverImage: "/image/dongpo-fantasy-cover.png",
       detailImages: [page(15), page(16), page(17), page(18), page(19), page(20), page(21)],
       tags: ["Unity", "VR", "游戏设计"],
@@ -53,8 +53,8 @@ export const projectArchiveSeedByCategory = {
       year: "2024",
       title: "维纸之旅",
       summary:
-        "国风叙事向游戏项目，作品页集中展示关卡环境、玩法机制、战斗画面与结果展示，整体更接近 PC 游戏作品而不是 Web 或 Agent 类型。",
-      coverImage: page(22),
+        "《维纸之旅》是一款以传统剪纸艺术为核心的跨维度冒险游戏，结合数字媒体艺术与现代设计，借助Unity引擎与Shader技术打造独特的视觉风格与交互体验。玩家将在二维与三维之间自由穿梭，剪裁、重组纸质世界，探索隐藏的秘密与挑战。游戏旨在通过创新的玩法与艺术表达，向世界展示中国剪纸文化的独特魅力与文化软实力。",
+      coverImage: "/image/Mask group2.png",
       detailImages: [page(22)],
       tags: ["Unity", "国风", "游戏关卡"],
       sortOrder: 10,
@@ -69,7 +69,7 @@ export const projectArchiveSeedByCategory = {
       title: "LUNANEST",
       summary:
         "LunaNest 是一套面向未来月面栖居的智能系统，结合仿生机器人与交互平台，完成熔岩管探测与建造模拟。系统采集三维数据，构建高精度模型，科研人员可通过 VR 沉浸式接管操作，辅助选址与规划“月球村”。",
-      coverImage: page(24),
+      coverImage: "/image/coverimg.png",
       detailImages: [page(24)],
       tags: ["VR Assist", "Lava Tube", "AI System"],
       sortOrder: 10,

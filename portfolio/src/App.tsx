@@ -1,22 +1,31 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Nav } from "./components/Nav";
 import { Hero } from "./components/Hero";
 import { About } from "./components/About";
 import { AboutProjectSeam } from "./components/AboutProjectSeam";
 import { Experience } from "./components/Experience";
-import { Projects } from "./components/Projects";
 import { Skills } from "./components/Skills";
 import { Beyond } from "./components/Beyond";
 import { Contact } from "./components/Contact";
-import { ProjectGallery } from "./components/ProjectGallery";
-import { ThreePixelStarField } from "./components/ThreePixelStarField";
-import PixelTrail from "./components/PixelTrail";
 import { getArchiveProjectBySlug, projectArchiveByCategory, type ArchiveProject } from "./data/projectArchive";
 import Ribbons from "./components/Ribbons";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const LazyProjects = lazy(() =>
+  import("./components/Projects").then((module) => ({ default: module.Projects })),
+);
+const LazyProjectGallery = lazy(() =>
+  import("./components/ProjectGallery").then((module) => ({ default: module.ProjectGallery })),
+);
+const LazyThreePixelStarField = lazy(() =>
+  import("./components/ThreePixelStarField").then((module) => ({
+    default: module.ThreePixelStarField,
+  })),
+);
+const LazyPixelTrail = lazy(() => import("./components/PixelTrail"));
 
 type ArchiveRouteState = {
   category: ArchiveProject["category"] | null;
@@ -66,9 +75,32 @@ function buildProjectRoute(slug: string) {
   return `/projects/${encodeURIComponent(slug)}`;
 }
 
+function ProjectsSectionFallback() {
+  return (
+    <section
+      id="projects"
+      className="relative min-h-[100dvh] overflow-hidden bg-transparent"
+      aria-label="Projects section loading"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(114,100,255,0.12),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.36)_30%,rgba(0,0,0,0.72))]" />
+      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-transparent to-black/30" />
+    </section>
+  );
+}
+
+function ProjectGalleryFallback() {
+  return <div className="fixed inset-0 z-[120] bg-black/82 backdrop-blur-md" aria-hidden="true" />;
+}
+
 function App() {
   const starFieldRef = useRef<HTMLDivElement>(null);
   const [archiveRoute, setArchiveRoute] = useState<ArchiveRouteState>(() => parseArchiveRoute());
+  const projectsLoadTriggerRef = useRef<HTMLDivElement>(null);
+  const [shouldLoadProjectsSection, setShouldLoadProjectsSection] = useState(() => {
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+    return path === "/projects" || path.startsWith("/projects/");
+  });
+  const [shouldLoadDeferredThree, setShouldLoadDeferredThree] = useState(false);
 
   useEffect(() => {
     const aboutSection = document.querySelector("#about");
@@ -144,6 +176,38 @@ function App() {
     return () => window.removeEventListener("popstate", syncRouteFromLocation);
   }, []);
 
+  useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      setShouldLoadDeferredThree(true);
+    }, 180);
+
+    return () => window.clearTimeout(timerId);
+  }, []);
+
+  useEffect(() => {
+    if (shouldLoadProjectsSection) return;
+
+    const trigger = projectsLoadTriggerRef.current;
+    if (!trigger) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+
+        setShouldLoadProjectsSection(true);
+        observer.disconnect();
+      },
+      {
+        rootMargin: "900px 0px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(trigger);
+
+    return () => observer.disconnect();
+  }, [shouldLoadProjectsSection]);
+
   const updateArchiveRoute = (nextRoute: ArchiveRouteState, url: string) => {
     setArchiveRoute(nextRoute);
     window.history.pushState(null, "", url);
@@ -200,16 +264,22 @@ function App() {
   return (
     <div className="relative bg-brand-bg text-brand-text min-h-screen selection:bg-brand-primary/30 selection:text-white overflow-x-hidden w-full max-w-full">
       <div className="fixed inset-0 z-[9998] pointer-events-none">
-        <PixelTrail
-          gridSize={200}
-          trailSize={0.015}
-          maxAge={100}
-          interpolate={2}
-          color="#ffffff"
-        />
+        <Suspense fallback={null}>
+          {shouldLoadDeferredThree ? (
+            <LazyPixelTrail
+              gridSize={200}
+              trailSize={0.015}
+              maxAge={100}
+              interpolate={2}
+              color="#ffffff"
+            />
+          ) : null}
+        </Suspense>
       </div>
       <div ref={starFieldRef} className="app-starfield-layer fixed inset-0 z-[50] pointer-events-none">
-        <ThreePixelStarField />
+        <Suspense fallback={null}>
+          {shouldLoadDeferredThree ? <LazyThreePixelStarField /> : null}
+        </Suspense>
       </div>
       <div className="fixed inset-0 z-[9999] pointer-events-none">
         <Ribbons />
@@ -221,19 +291,30 @@ function App() {
         <Hero />
         <About />
         <AboutProjectSeam />
-        <Projects onCategorySelect={handleCategorySelect} />
+        <div ref={projectsLoadTriggerRef} className="h-px w-full" aria-hidden="true" />
+        <Suspense fallback={<ProjectsSectionFallback />}>
+          {shouldLoadProjectsSection ? (
+            <LazyProjects onCategorySelect={handleCategorySelect} />
+          ) : (
+            <ProjectsSectionFallback />
+          )}
+        </Suspense>
         <Experience />
         <Skills />
         <Beyond />
       </main>
 
-      <ProjectGallery
-        category={archiveRoute.category}
-        projectSlug={archiveRoute.projectSlug}
-        onProjectOpen={handleProjectOpen}
-        onProjectClose={handleProjectClose}
-        onClose={handleGalleryClose}
-      />
+      <Suspense fallback={archiveRoute.category ? <ProjectGalleryFallback /> : null}>
+        {archiveRoute.category ? (
+          <LazyProjectGallery
+            category={archiveRoute.category}
+            projectSlug={archiveRoute.projectSlug}
+            onProjectOpen={handleProjectOpen}
+            onProjectClose={handleProjectClose}
+            onClose={handleGalleryClose}
+          />
+        ) : null}
+      </Suspense>
 
       <Contact />
     </div>
