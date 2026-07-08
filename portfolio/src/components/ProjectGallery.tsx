@@ -66,6 +66,7 @@ function ProjectImage({
   src,
   srcSet,
   sizes,
+  fallbackSrc,
   alt,
   imgClassName,
   priority = false,
@@ -73,40 +74,54 @@ function ProjectImage({
   src?: string;
   srcSet?: string;
   sizes?: string;
+  fallbackSrc?: string;
   alt: string;
   imgClassName: string;
   priority?: boolean;
 }) {
   const imageRef = useRef<HTMLImageElement>(null);
+  const [activeSrc, setActiveSrc] = useState(src);
+  const [activeSrcSet, setActiveSrcSet] = useState(srcSet);
   const [status, setStatus] = useState<ProjectImageStatus>(src ? "loading" : "error");
 
   useEffect(() => {
+    setActiveSrc(src);
+    setActiveSrcSet(srcSet);
     setStatus(src ? "loading" : "error");
   }, [src, srcSet, sizes]);
 
   useEffect(() => {
     const image = imageRef.current;
-    if (!image || !src) return;
+    if (!image || !activeSrc) return;
 
     if (image.complete) {
       setStatus(image.naturalWidth > 0 ? "loaded" : "error");
     }
-  }, [src, srcSet, sizes]);
+  }, [activeSrc, activeSrcSet, sizes]);
 
   return (
     <>
-      {src ? (
+      {activeSrc ? (
         <img
           ref={imageRef}
-          src={src}
-          srcSet={srcSet}
+          src={activeSrc}
+          srcSet={activeSrcSet}
           sizes={sizes}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
           fetchPriority={priority ? "high" : "auto"}
           onLoad={() => setStatus("loaded")}
-          onError={() => setStatus("error")}
+          onError={() => {
+            if (fallbackSrc && activeSrc !== fallbackSrc) {
+              setActiveSrc(fallbackSrc);
+              setActiveSrcSet(undefined);
+              setStatus("loading");
+              return;
+            }
+
+            setStatus("error");
+          }}
           className={`${imgClassName} transition-opacity duration-500 ${status === "loaded" ? "opacity-100" : "opacity-0"}`}
         />
       ) : null}
@@ -129,7 +144,11 @@ export function ProjectGallery({
   onClose,
 }: ProjectGalleryProps) {
   const [selectedProject, setSelectedProject] = useState<ArchiveProject | null>(null);
-  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
+  const [previewImage, setPreviewImage] = useState<{
+    src: string;
+    fallbackSrc?: string;
+    alt: string;
+  } | null>(null);
   const [projects, setProjects] = useState<ArchiveProject[]>([]);
   const [projectsStatus, setProjectsStatus] = useState<ProjectRequestStatus>("idle");
   const isWebCategory = category === "Web";
@@ -236,6 +255,9 @@ export function ProjectGallery({
     if (!previewImage) return;
 
     preloadImage(previewImage.src);
+    if (previewImage.fallbackSrc) {
+      preloadImage(previewImage.fallbackSrc);
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -383,6 +405,7 @@ export function ProjectGallery({
                         src={coverAsset.src}
                         srcSet={coverAsset.srcSet}
                         sizes={coverAsset.sizes}
+                        fallbackSrc={project.coverImage}
                         alt={project.title}
                         priority={index < 2}
                         imgClassName="absolute inset-0 h-full w-full object-cover object-right transition-transform duration-1000 ease-out group-hover:scale-105 opacity-65 group-hover:opacity-100"
@@ -531,6 +554,7 @@ export function ProjectGallery({
                           onClick={() =>
                             setPreviewImage({
                               src: getPreviewImageSrc(image),
+                                fallbackSrc: image,
                               alt: `${selectedProject.title} detail ${index + 1}`,
                             })
                           }
@@ -596,6 +620,7 @@ export function ProjectGallery({
                   <div className="relative min-h-[50vh] min-w-[60vw] max-h-[88dvh] max-w-[96vw] md:max-h-[90dvh] md:max-w-[92vw]">
                     <ProjectImage
                       src={previewImage.src}
+                      fallbackSrc={previewImage.fallbackSrc}
                       alt={previewImage.alt}
                       priority
                       imgClassName="block max-h-[88dvh] max-w-[96vw] object-contain md:max-h-[90dvh] md:max-w-[92vw]"

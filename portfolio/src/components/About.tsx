@@ -4,11 +4,23 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { content } from "../data/content";
+import { fallbackExperience, type ExperienceItem } from "../data/experience";
 import Shuffle from "./Shuffle";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function About() {
+function getPreviewItems(honors: string[], responsibilities: string[]) {
+  if (honors.length === 0) return responsibilities;
+
+  const preview = honors.slice(0, 5);
+  return honors.length > 5 ? [...preview, "..."] : preview;
+}
+
+type AboutProps = {
+  experience?: ExperienceItem[];
+};
+
+export function About({ experience = fallbackExperience }: AboutProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -159,7 +171,7 @@ export function About() {
                 <div className="divider-line h-px flex-1 bg-white/10 origin-left group-hover/section:bg-brand-primary/30 transition-colors duration-500"></div>
               </div>
               <div className="flex flex-col gap-3">
-                {content.experience.map((exp) => (
+                {experience.map((exp) => (
                   <div key={exp.id} className="group/item relative transition-transform duration-500 ease-out hover:translate-x-1.5 py-1">
                     <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-1 mb-1.5">
                       <div>
@@ -174,11 +186,11 @@ export function About() {
                       </div>
                       <div className="text-[9px] font-pixel tracking-widest text-brand-muted mt-1 md:mt-0">{exp.date}</div>
                     </div>
-                    <ul className="flex flex-col gap-1">
-                        {exp.responsibilities.map((req, i) => (
+                      <ul className="flex flex-col gap-1">
+                        {getPreviewItems(exp.honors, exp.responsibilities).map((item, i) => (
                           <li key={i} className="text-brand-text/60 text-[11px] leading-snug flex gap-2 items-start">
                             <span className="text-brand-primary/50 mt-[4px] text-[6px]">■</span>
-                            <span>{req}</span>
+                            <span>{item}</span>
                           </li>
                         ))}
                       </ul>

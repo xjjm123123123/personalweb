@@ -46,10 +46,53 @@ const RESPONSIVE_PROJECT_COVERS: Record<string, ResponsiveProjectCover> = {
   },
 };
 
+const RESPONSIVE_PROJECT_COVER_MATCHERS: Array<{
+  match: (image: string) => boolean;
+  asset: ResponsiveProjectCover;
+}> = [
+  {
+    match: (image) =>
+      image.includes("/projects/guokebang-ai-agent/cover/") || image.includes("group-37427"),
+    asset: RESPONSIVE_PROJECT_COVERS["/image/Group 37427.png"],
+  },
+  {
+    match: (image) =>
+      image.includes("/projects/plastic-ocean-vr/cover/") || image.includes("mask-group-"),
+    asset: RESPONSIVE_PROJECT_COVERS["/image/Mask group.png"],
+  },
+  {
+    match: (image) =>
+      image.includes("/projects/dongpo-fantasy-vr/cover/") || image.includes("dongpo-fantasy"),
+    asset: RESPONSIVE_PROJECT_COVERS["/image/dongpo-fantasy-cover.png"],
+  },
+  {
+    match: (image) =>
+      image.includes("/projects/yongzhi-journey-game/cover/") || image.includes("mask-group2"),
+    asset: RESPONSIVE_PROJECT_COVERS["/image/Mask group2.png"],
+  },
+  {
+    match: (image) =>
+      image.includes("/projects/lunanest-robotics/cover/") || image.includes("coverimg"),
+    asset: RESPONSIVE_PROJECT_COVERS["/image/coverimg.png"],
+  },
+  {
+    match: (image) =>
+      image.includes("/projects/northeast-revitalization-interactive-news/cover/")
+      || image.includes("rectangle"),
+    asset: RESPONSIVE_PROJECT_COVERS["/image/Rectangle.png"],
+  },
+];
+
 export function getResponsiveProjectCover(image?: string): ResponsiveProjectCover {
   if (!image) {
     return { src: "" };
   }
 
-  return RESPONSIVE_PROJECT_COVERS[image] ?? { src: image };
+  const exactAsset = RESPONSIVE_PROJECT_COVERS[image];
+  if (exactAsset) {
+    return exactAsset;
+  }
+
+  const matchedAsset = RESPONSIVE_PROJECT_COVER_MATCHERS.find(({ match }) => match(image))?.asset;
+  return matchedAsset ?? { src: image };
 }

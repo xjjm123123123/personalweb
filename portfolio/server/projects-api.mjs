@@ -69,6 +69,25 @@ function setCachedProjects(cacheKey, projects) {
   });
 }
 
+function getCachedPayload(cacheKey) {
+  const cached = apiResponseCache.get(cacheKey);
+  if (!cached) return null;
+
+  if (Date.now() - cached.updatedAt > API_RESPONSE_TTL_MS) {
+    apiResponseCache.delete(cacheKey);
+    return null;
+  }
+
+  return cached.payload;
+}
+
+function setCachedPayload(cacheKey, payload) {
+  apiResponseCache.set(cacheKey, {
+    payload,
+    updatedAt: Date.now(),
+  });
+}
+
 function toTextArray(value) {
   if (Array.isArray(value)) {
     return value.map((item) => String(item)).filter(Boolean);
@@ -131,6 +150,20 @@ function normalizeArchiveProject(row) {
   };
 }
 
+function normalizeExperience(row) {
+  return {
+    id: String(row.id ?? row.slug ?? row.company ?? ""),
+    company: row.company ?? "",
+    role: row.role ?? row.title ?? "",
+    date: row.date ?? row.period ?? "",
+    location: row.location ?? "",
+    responsibilities: toTextArray(row.responsibilities),
+    honors: toTextArray(row.honors),
+    achievements: toTextArray(row.achievements),
+    sortOrder: Number(row.sort_order ?? 0),
+  };
+}
+
 async function requestSupabaseRows(category, select) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const serviceRoleKey =
@@ -147,6 +180,38 @@ async function requestSupabaseRows(category, select) {
   apiUrl.searchParams.set("select", select);
   apiUrl.searchParams.set("category", `eq.${category}`);
   apiUrl.searchParams.set("order", "sort_order.asc,title.asc");
+
+  const response = await fetch(apiUrl, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`Supabase request failed: ${response.status} ${message}`);
+  }
+
+  return response.json();
+}
+
+async function requestSupabaseExperienceRows(select) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey =
+    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const table = process.env.SUPABASE_EXPERIENCES_TABLE || "experiences";
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "Missing SUPABASE_URL and one of SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY in .env",
+    );
+  }
+
+  const apiUrl = new URL(`/rest/v1/${table}`, supabaseUrl);
+  apiUrl.searchParams.set("select", select);
+  apiUrl.searchParams.set("order", "sort_order.asc,date.desc,company.asc");
 
   const response = await fetch(apiUrl, {
     headers: {
@@ -196,6 +261,14 @@ async function fetchProjectArchive(category) {
   return rows.map(normalizeArchiveProject);
 }
 
+async function fetchExperiences() {
+  const rows = await requestSupabaseExperienceRows(
+    "id,company,role,date,location,responsibilities,honors,achievements,sort_order",
+  );
+
+  return rows.map(normalizeExperience);
+}
+
 loadLocalEnv();
 
 const server = createServer(async (req, res) => {
@@ -213,9 +286,32 @@ const server = createServer(async (req, res) => {
 
   const isLegacyProjectsApi = requestUrl.pathname === "/api/projects";
   const isArchiveProjectsApi = requestUrl.pathname === "/api/project-archive";
+  const isExperiencesApi = requestUrl.pathname === "/api/experiences";
 
-  if (!isLegacyProjectsApi && !isArchiveProjectsApi) {
+  if (!isLegacyProjectsApi && !isArchiveProjectsApi && !isExperiencesApi) {
     writeJson(res, 404, { error: "Not found" });
+    return;
+  }
+
+  if (isExperiencesApi) {
+    try {
+      const cacheKey = requestUrl.pathname;
+      const cachedPayload = getCachedPayload(cacheKey);
+
+      if (cachedPayload) {
+        writeJson(res, 200, cachedPayload, getCacheHeaders());
+        return;
+      }
+
+      const experiences = await fetchExperiences();
+      const payload = { experiences };
+      setCachedPayload(cacheKey, payload);
+      writeJson(res, 200, payload, getCacheHeaders());
+    } catch (error) {
+      writeJson(res, 500, {
+        error: error instanceof Error ? error.message : "Unknown server error",
+      });
+    }
     return;
   }
 

@@ -1,0 +1,159 @@
+.experience-particle-field {
+  overflow: hidden;
+}
+
+.experience-particle-burst {
+  position: absolute;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.64) 0 0.72px, transparent 1.25px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.4) 0 0.62px, transparent 1.16px);
+  background-position:
+    0 0,
+    9px 11px;
+  background-size:
+    17px 17px,
+    23px 23px;
+  mask-image: radial-gradient(ellipse at center, #000 0%, rgba(0, 0, 0, 0.58) 34%, transparent 68%);
+  opacity: 0;
+  transform: translate3d(0, 10px, 0) scale(0.985);
+  animation: experience-particle-breathe 5.2s ease-in-out infinite;
+  will-change: opacity, transform, background-position;
+}
+
+.experience-particle-burst::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.56) 0 0.65px, transparent 1.15px);
+  background-size: 29px 29px;
+  background-position: 13px 7px;
+  opacity: 0;
+  animation: experience-particle-spark 4.6s ease-in-out infinite;
+}
+
+.experience-particle-burst--top-left {
+  left: -2vw;
+  top: 2rem;
+  width: 34vw;
+  height: 15rem;
+  animation-delay: -1.2s;
+}
+
+.experience-particle-burst--top-left::after {
+  animation-delay: -3.1s;
+}
+
+.experience-particle-burst--top-right {
+  right: -3vw;
+  top: 2.5rem;
+  width: 32vw;
+  height: 15rem;
+  animation-duration: 5.8s;
+  animation-delay: -3.1s;
+}
+
+.experience-particle-burst--top-right::after {
+  animation-duration: 4.9s;
+  animation-delay: -0.8s;
+}
+
+.experience-particle-burst--middle-left {
+  left: -4vw;
+  top: 42%;
+  width: 28vw;
+  height: 19rem;
+  animation-duration: 6.1s;
+  animation-delay: -4.1s;
+}
+
+.experience-particle-burst--middle-left::after {
+  animation-delay: -2.2s;
+}
+
+.experience-particle-burst--middle-right {
+  right: -5vw;
+  top: 38%;
+  width: 29vw;
+  height: 20rem;
+  animation-duration: 5.4s;
+  animation-delay: -2.6s;
+}
+
+.experience-particle-burst--middle-right::after {
+  animation-duration: 4.4s;
+  animation-delay: -4.9s;
+}
+
+.experience-particle-burst--bottom {
+  left: 20vw;
+  right: 16vw;
+  bottom: -1.5rem;
+  height: 17rem;
+  animation-duration: 6.2s;
+  animation-delay: -1.8s;
+  background-size:
+    19px 19px,
+    27px 27px;
+}
+
+.experience-particle-burst--bottom::after {
+  animation-duration: 5.1s;
+  animation-delay: -5.7s;
+}
+
+@keyframes experience-particle-breathe {
+  0%,
+  6% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.985);
+    background-position:
+      0 0,
+      9px 11px;
+  }
+  18% {
+    opacity: 0.3;
+  }
+  42% {
+    opacity: 0.15;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  62% {
+    opacity: 0.32;
+  }
+  88%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -12px, 0) scale(1.012);
+    background-position:
+      22px -18px,
+      -11px 27px;
+  }
+}
+
+@keyframes experience-particle-spark {
+  0%,
+  8% {
+    opacity: 0;
+  }
+  24% {
+    opacity: 0.24;
+  }
+  48% {
+    opacity: 0.08;
+  }
+  68% {
+    opacity: 0.26;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-particle-burst,
+  .experience-particle-burst::after {
+    animation: none;
+    opacity: 0.28;
+  }
+}

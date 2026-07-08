@@ -8,6 +8,7 @@ import { Skills } from "./components/Skills";
 import { Beyond } from "./components/Beyond";
 import { Contact } from "./components/Contact";
 import { getArchiveProjectBySlug, projectArchiveByCategory, type ArchiveProject } from "./data/projectArchive";
+import { fallbackExperience, fetchExperiences, type ExperienceItem } from "./data/experience";
 import Ribbons from "./components/Ribbons";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -101,6 +102,8 @@ function App() {
     return path === "/projects" || path.startsWith("/projects/");
   });
   const [shouldLoadDeferredThree, setShouldLoadDeferredThree] = useState(false);
+  const [shouldLoadPixelTrail, setShouldLoadPixelTrail] = useState(false);
+  const [experience, setExperience] = useState<ExperienceItem[]>(fallbackExperience);
 
   useEffect(() => {
     const aboutSection = document.querySelector("#about");
@@ -177,11 +180,41 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const pointerQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const syncPixelTrailAvailability = () => {
+      setShouldLoadPixelTrail(!motionQuery.matches && pointerQuery.matches);
+    };
+
+    syncPixelTrailAvailability();
+    motionQuery.addEventListener("change", syncPixelTrailAvailability);
+    pointerQuery.addEventListener("change", syncPixelTrailAvailability);
+
     const timerId = window.setTimeout(() => {
       setShouldLoadDeferredThree(true);
     }, 180);
 
-    return () => window.clearTimeout(timerId);
+    return () => {
+      window.clearTimeout(timerId);
+      motionQuery.removeEventListener("change", syncPixelTrailAvailability);
+      pointerQuery.removeEventListener("change", syncPixelTrailAvailability);
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetchExperiences(controller.signal)
+      .then((nextExperience) => {
+        if (nextExperience.length > 0) {
+          setExperience(nextExperience);
+        }
+      })
+      .catch(() => {
+        setExperience(fallbackExperience);
+      });
+
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -263,15 +296,16 @@ function App() {
 
   return (
     <div className="relative bg-brand-bg text-brand-text min-h-screen selection:bg-brand-primary/30 selection:text-white overflow-x-hidden w-full max-w-full">
-      <div className="fixed inset-0 z-[9998] pointer-events-none">
+      <div className="fixed inset-0 z-[100001] pointer-events-none">
         <Suspense fallback={null}>
-          {shouldLoadDeferredThree ? (
+          {shouldLoadDeferredThree && shouldLoadPixelTrail ? (
             <LazyPixelTrail
               gridSize={200}
               trailSize={0.015}
               maxAge={100}
               interpolate={2}
               color="#ffffff"
+              gooeyFilter={null}
             />
           ) : null}
         </Suspense>
@@ -289,7 +323,7 @@ function App() {
 
       <main className="relative z-10 overflow-x-hidden w-full max-w-full">
         <Hero />
-        <About />
+        <About experience={experience} />
         <AboutProjectSeam />
         <div ref={projectsLoadTriggerRef} className="h-px w-full" aria-hidden="true" />
         <Suspense fallback={<ProjectsSectionFallback />}>
@@ -299,7 +333,7 @@ function App() {
             <ProjectsSectionFallback />
           )}
         </Suspense>
-        <Experience />
+        <Experience experience={experience} />
         <Skills />
         <Beyond />
       </main>

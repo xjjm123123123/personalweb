@@ -1,13 +1,30 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { content } from "../data/content";
+import { fallbackExperience, type ExperienceItem } from "../data/experience";
+import ScrambledText from "./ScrambledText";
+import PixelBlast from "./PixelBlast/PixelBlast";
+import "./Experience.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function Experience() {
-  const { experience } = content;
+function getPreviewItems(honors: string[], responsibilities: string[]) {
+  if (honors.length === 0) return responsibilities;
+
+  const preview = honors.slice(0, 5);
+  return honors.length > 5 ? [...preview, "..."] : preview;
+}
+
+type ExperienceProps = {
+  experience?: ExperienceItem[];
+};
+
+export function Experience({ experience = fallbackExperience }: ExperienceProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const stickyOffset = 56;
+  const [activeExperienceId, setActiveExperienceId] = useState<string | null>(null);
+  const activeExperience =
+    experience.find((item) => item.id === activeExperienceId) ?? null;
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -18,9 +35,9 @@ export function Experience() {
         if (i === cardEls.length - 1) return;
         ScrollTrigger.create({
           trigger: card,
-          start: "top top+=100", // pin slightly below nav
+          start: `top top+=${stickyOffset}`,
           endTrigger: cardEls[cardEls.length - 1],
-          end: "top top+=100",
+          end: `top top+=${stickyOffset}`,
           pin: true,
           pinSpacing: false,
         });
@@ -32,94 +49,283 @@ export function Experience() {
           scrollTrigger: {
             trigger: cardEls[i + 1],
             start: "top bottom",
-            end: "top top+=100",
+            end: `top top+=${stickyOffset}`,
             scrub: true,
           },
         });
       });
     }, ref);
     return () => ctx.revert();
-  }, [experience.length]);
+  }, [experience.length, stickyOffset]);
+
+  useEffect(() => {
+    if (!activeExperience) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveExperienceId(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeExperience]);
 
   return (
-    <section id="experience" className="py-32 w-full bg-transparent relative">
-      <div className="mx-auto max-w-5xl px-6 lg:px-8">
-        <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white mb-24 text-center">
+    <section id="experience" className="relative isolate min-h-[760px] w-full overflow-hidden bg-black py-32 font-pixel">
+      <div
+        className="absolute -inset-x-[18vw] -inset-y-24 z-0 min-h-[calc(100%+12rem)] opacity-52"
+        style={{
+          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.28) 14%, rgba(0,0,0,0.62) 30%, black 62%)",
+          maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.28) 14%, rgba(0,0,0,0.62) 30%, black 62%)",
+        }}
+      >
+        <PixelBlast
+          variant="circle"
+          className=""
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+          antialias={false}
+          pixelSize={6}
+          color="#FFFFFF"
+          patternScale={2.4}
+          patternDensity={0.86}
+          pixelSizeJitter={0.18}
+          enableRipples={false}
+          liquid={false}
+          speed={0.35}
+          edgeFade={0.12}
+          autoPauseOffscreen={false}
+          transparent
+        />
+      </div>
+      <div className="experience-particle-field pointer-events-none absolute inset-0 z-[1]" aria-hidden="true">
+        <div className="experience-particle-burst experience-particle-burst--top-left" />
+        <div className="experience-particle-burst experience-particle-burst--top-right" />
+        <div className="experience-particle-burst experience-particle-burst--middle-left" />
+        <div className="experience-particle-burst experience-particle-burst--middle-right" />
+        <div className="experience-particle-burst experience-particle-burst--bottom" />
+      </div>
+      
+      <div className="mx-auto max-w-6xl px-6 lg:px-8 relative z-10">
+        <ScrambledText as="h2" className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white mb-8 text-center">
           经历与成长
-        </h2>
+        </ScrambledText>
+        
+        <div className="mx-auto mb-16 flex w-fit items-center gap-3 border-2 border-brand-primary bg-black px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-brand-primary transition-transform hover:-translate-y-1" style={{ boxShadow: '4px 4px 0px #b497cf' }}>
+          <span className="h-2 w-2 bg-brand-primary" />
+          <span>成长档案</span>
+          <span className="text-white/34">/</span>
+          <span className="text-white/48">点击查看完整记录</span>
+        </div>
 
         <div ref={ref} className="relative pb-[50vh]">
-          {/* Mock multiple experiences by repeating if needed, just to show the stack effect */}
-          {experience.map((exp, i) => (
-            <div
-              key={exp.id + i}
-              className="stack-card sticky top-[100px] w-full pt-8"
-              style={{ zIndex: i }}
-            >
-              <div className="rounded-[2rem] bg-[#0d121f] border border-white/10 p-10 md:p-16 flex flex-col gap-8 shadow-2xl">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-white/10 pb-8">
-                  <div>
-                    <h3 className="font-display text-3xl font-bold text-white mb-2">
-                      {exp.company}
-                    </h3>
-                    <div className="text-xl text-brand-primary font-medium">
-                      {exp.role}
+          {experience.map((exp, i) => {
+            const previewItems = getPreviewItems(exp.honors, exp.responsibilities);
+            const isAcademic = exp.id === "exp-hit-monitor";
+            const accentColor = isAcademic ? "#9B5CFF" : "#325ab4"; // 哈工大紫 / 字节蓝
+            const accentClass = isAcademic ? "text-[#9B5CFF]" : "text-[#325ab4]";
+            const borderClass = isAcademic ? "border-[#9B5CFF]" : "border-[#325ab4]";
+            const bgHoverClass = isAcademic ? "hover:bg-[#9B5CFF]" : "hover:bg-[#325ab4]";
+            const LogoIcon = isAcademic ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+                <path d="M4 14l8 4 8-4M4 10l8 4 8-4M12 2L4 6l8 4 8-4-8-4z" />
+              </svg>
+            );
+
+            return (
+              <div
+                key={exp.id + i}
+                className="stack-card sticky w-full pt-0"
+                data-sticky-offset={stickyOffset}
+                style={{ zIndex: i, top: `${stickyOffset}px` }}
+              >
+                <div 
+                  className={`group/card relative border-2 ${borderClass} bg-black/82 p-8 md:p-10 backdrop-blur-[1px] transition-all duration-300 hover:-translate-y-2`}
+                  style={{ boxShadow: `8px 8px 0px ${accentColor}` }}
+                >
+                  <div className="flex flex-col gap-8">
+                    <div className="flex items-center justify-between gap-4 border-b-2 border-white/20 pb-5 text-[10px] uppercase tracking-[0.22em] text-white/60">
+                      <span>{String(i + 1).padStart(2, "0")} / RECORD</span>
+                      <span className={accentClass}>{isAcademic ? "ACADEMIC MODE" : "AI SOLUTION MODE"}</span>
                     </div>
-                  </div>
-                  <div className="text-right text-brand-muted text-sm font-medium tracking-widest uppercase">
-                    <div>{exp.date}</div>
-                    <div>{exp.location}</div>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-brand-muted mb-6">
-                      主要工作
-                    </h4>
-                    <ul className="flex flex-col gap-4">
-                      {exp.responsibilities.map((req, idx) => (
-                        <li key={idx} className="flex gap-4 text-brand-text/90 leading-relaxed">
-                          <span className="text-brand-primary mt-1 opacity-50">-</span>
-                          <span>{req}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                        <div className="relative">
+                          <div className={`mb-4 flex items-center gap-4 font-display text-4xl md:text-5xl lg:text-6xl font-black leading-none tracking-[-0.04em] uppercase ${accentClass}`}>
+                          {LogoIcon}
+                            {exp.company}
+                        </div>
+                        <h3 className="text-sm md:text-base font-bold tracking-[0.1em] text-white/50 uppercase">
+                            {exp.role}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-4 self-end md:self-auto">
+                        <div className="border-2 border-white/20 bg-black px-4 py-3 text-right text-brand-muted text-xs tracking-[0.18em] uppercase">
+                          <div className="mb-1">{exp.date}</div>
+                          <div className={accentClass}>{exp.location}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveExperienceId(exp.id)}
+                          className={`flex h-12 w-12 items-center justify-center border-2 border-white/20 bg-black text-white transition-all duration-300 ${borderClass} ${bgHoverClass} hover:text-black hover:-translate-y-1 hover:translate-x-1`}
+                          style={{ boxShadow: `4px 4px 0px ${accentColor}` }}
+                          aria-label={`${exp.company} 详情`}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter">
+                            <path d="M9 18l6-6-6-6"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
 
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-brand-muted mb-6">
-                      代表成果
-                    </h4>
-                    <ul className="flex flex-col gap-4">
-                      {exp.achievements.map((ach, idx) => (
-                        <li key={idx} className="flex gap-4 text-brand-text/90 leading-relaxed">
-                          <span className="text-brand-primary mt-1 opacity-50">-</span>
-                          <span>{ach}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {previewItems.length > 0 && (
+                      <div className="grid gap-4 pt-4 md:grid-cols-[170px_1fr] border-t-2 border-dashed border-white/20 mt-2">
+                        <h4 className="text-[10px] font-bold uppercase tracking-[0.22em] text-brand-muted mt-4">
+                          {exp.honors.length > 0 ? "个人荣誉" : "主要工作"}
+                        </h4>
+                        <ul className="grid gap-3 mt-4">
+                          {previewItems.map((item, idx) => (
+                            <li key={idx} className="group/item flex gap-3 text-white/80 leading-relaxed font-sans text-sm md:text-base">
+                              <span className={`mt-2 h-2 w-2 shrink-0 ${isAcademic ? "bg-[#9B5CFF]" : "bg-[#325ab4]"}`} />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
-          {/* Add a dummy card to show stacking if there's only 1 real exp */}
           {experience.length === 1 && (
-            <div className="stack-card sticky top-[100px] w-full pt-8" style={{ zIndex: 1 }}>
-              <div className="rounded-[2rem] bg-[#0f1424] border border-white/10 p-10 md:p-16 flex flex-col justify-center items-center text-center shadow-2xl min-h-[400px]">
-                <h3 className="font-display text-3xl font-bold text-white mb-4">
+            <div className="stack-card sticky w-full pt-0" data-sticky-offset={stickyOffset} style={{ zIndex: 1, top: `${stickyOffset}px` }}>
+              <div className="border-2 border-white/20 bg-black/82 p-10 md:p-16 flex flex-col justify-center items-center text-center backdrop-blur-[1px] transition-transform hover:-translate-y-2" style={{ boxShadow: '8px 8px 0px rgba(255,255,255,0.2)' }}>
+                <ScrambledText as="h3" className="font-display text-3xl font-bold text-white mb-4 uppercase">
                   下一个里程碑
-                </h3>
-                <p className="text-brand-muted max-w-md">
+                </ScrambledText>
+                <ScrambledText as="p" className="text-brand-muted max-w-md font-sans">
                   始终保持学习的姿态，期待在未来的项目中创造更多价值。
-                </p>
+                </ScrambledText>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {activeExperience && (
+        <div
+          className="fixed inset-0 z-[100000] flex items-start md:items-center justify-center bg-black/80 px-4 md:px-6 py-8 md:py-12 overflow-y-auto"
+          onClick={() => setActiveExperienceId(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeExperience.company} 详情`}
+        >
+          <div
+            className={`w-full max-w-4xl my-auto bg-black border-4 ${activeExperience.id === "exp-hit-monitor" ? "border-[#9B5CFF]" : "border-[#325ab4]"} p-8 md:p-12`}
+            style={{ boxShadow: `12px 12px 0px ${activeExperience.id === "exp-hit-monitor" ? "#9B5CFF" : "#325ab4"}` }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-6 border-b-4 border-white/20 pb-6">
+              <div>
+                <ScrambledText as="h3" className={`flex items-center gap-4 font-display text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight ${activeExperience.id === "exp-hit-monitor" ? "text-[#9B5CFF]" : "text-[#325ab4]"}`}>
+                  {activeExperience.id === "exp-hit-monitor" ? (
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter" className="shrink-0">
+                      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                  ) : (
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter" className="shrink-0">
+                      <path d="M4 14l8 4 8-4M4 10l8 4 8-4M12 2L4 6l8 4 8-4-8-4z" />
+                    </svg>
+                  )}
+                  {activeExperience.company}
+                </ScrambledText>
+                <ScrambledText as="div" className="mt-4 text-sm md:text-base font-bold tracking-[0.1em] text-white/50 uppercase">
+                  {activeExperience.role}
+                </ScrambledText>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveExperienceId(null)}
+                className={`flex h-12 w-12 shrink-0 items-center justify-center border-2 border-white/20 bg-black text-white transition-all duration-300 hover:-translate-y-1 hover:translate-x-1 ${activeExperience.id === "exp-hit-monitor" ? "hover:bg-[#9B5CFF]" : "hover:bg-[#325ab4]"} hover:text-black`}
+                style={{ boxShadow: `4px 4px 0px ${activeExperience.id === "exp-hit-monitor" ? "#9B5CFF" : "#325ab4"}` }}
+                aria-label="关闭详情"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-[10px] uppercase tracking-[0.18em] text-white/60">
+              <ScrambledText as="span">{activeExperience.date} / {activeExperience.location}</ScrambledText>
+            </div>
+
+            <div className="mt-10 space-y-10 font-sans">
+              {activeExperience.honors.length > 0 && (
+                <div>
+                  <ScrambledText as="h4" className="text-xs font-bold uppercase tracking-widest text-brand-muted mb-6 font-pixel">
+                    个人荣誉
+                  </ScrambledText>
+                  <ul className="flex flex-col gap-4">
+                    {activeExperience.honors.map((item, index) => (
+                      <li key={index} className={`flex gap-4 text-white/90 leading-relaxed border-l-2 border-white/10 pl-4 transition-colors ${activeExperience.id === "exp-hit-monitor" ? "hover:border-[#9B5CFF]" : "hover:border-[#325ab4]"}`}>
+                        <span className={`mt-1 font-bold ${activeExperience.id === "exp-hit-monitor" ? "text-[#9B5CFF]" : "text-[#325ab4]"}`}>{">"}</span>
+                        <ScrambledText as="span">{item}</ScrambledText>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {activeExperience.responsibilities.length > 0 && (
+                <div>
+                  <ScrambledText as="h4" className="text-xs font-bold uppercase tracking-widest text-brand-muted mb-6 font-pixel">
+                    主要工作
+                  </ScrambledText>
+                  <ul className="flex flex-col gap-4">
+                    {activeExperience.responsibilities.map((item, index) => (
+                      <li key={index} className={`flex gap-4 text-white/90 leading-relaxed border-l-2 border-white/10 pl-4 transition-colors ${activeExperience.id === "exp-hit-monitor" ? "hover:border-[#9B5CFF]" : "hover:border-[#325ab4]"}`}>
+                        <span className={`mt-1 font-bold ${activeExperience.id === "exp-hit-monitor" ? "text-[#9B5CFF]" : "text-[#325ab4]"}`}>{">"}</span>
+                        <ScrambledText as="span">{item}</ScrambledText>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {activeExperience.achievements.length > 0 && (
+                <div>
+                  <ScrambledText as="h4" className="text-xs font-bold uppercase tracking-widest text-brand-muted mb-6 font-pixel">
+                    {activeExperience.honors.length > 0 && activeExperience.responsibilities.length === 0 ? "竞赛/科研" : "代表成果"}
+                  </ScrambledText>
+                  <ul className="flex flex-col gap-4">
+                    {activeExperience.achievements.map((item, index) => (
+                      <li key={index} className={`flex gap-4 text-white/90 leading-relaxed border-l-2 border-white/10 pl-4 transition-colors ${activeExperience.id === "exp-hit-monitor" ? "hover:border-[#9B5CFF]" : "hover:border-[#325ab4]"}`}>
+                        <span className={`mt-1 font-bold ${activeExperience.id === "exp-hit-monitor" ? "text-[#9B5CFF]" : "text-[#325ab4]"}`}>{">"}</span>
+                        <ScrambledText as="span">{item}</ScrambledText>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
