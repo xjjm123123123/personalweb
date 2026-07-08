@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { fallbackExperience, type ExperienceItem } from "../data/experience";
+import { byteStarProjects } from "../data/byteStarProjects";
 import ScrambledText from "./ScrambledText";
 import PixelBlast from "./PixelBlast/PixelBlast";
 import "./Experience.css";
+
+const GOLD = "#E8B923";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,6 +26,8 @@ export function Experience({ experience = fallbackExperience }: ExperienceProps)
   const ref = useRef<HTMLDivElement>(null);
   const stickyOffset = 56;
   const [activeExperienceId, setActiveExperienceId] = useState<string | null>(null);
+  const [showStarDetails, setShowStarDetails] = useState(false);
+  const [openStarIndex, setOpenStarIndex] = useState<number | null>(null);
   const activeExperience =
     experience.find((item) => item.id === activeExperienceId) ?? null;
 
@@ -78,6 +83,11 @@ export function Experience({ experience = fallbackExperience }: ExperienceProps)
     };
   }, [activeExperience]);
 
+  useEffect(() => {
+    setShowStarDetails(false);
+    setOpenStarIndex(null);
+  }, [activeExperienceId]);
+
   return (
     <section id="experience" className="relative isolate min-h-[760px] w-full overflow-hidden bg-black py-32 font-pixel">
       <div
@@ -118,13 +128,6 @@ export function Experience({ experience = fallbackExperience }: ExperienceProps)
           经历与成长
         </ScrambledText>
         
-        <div className="mx-auto mb-16 flex w-fit items-center gap-3 border-2 border-brand-primary bg-black px-4 py-2 text-[10px] uppercase tracking-[0.22em] text-brand-primary transition-transform hover:-translate-y-1" style={{ boxShadow: '4px 4px 0px #b497cf' }}>
-          <span className="h-2 w-2 bg-brand-primary" />
-          <span>成长档案</span>
-          <span className="text-white/34">/</span>
-          <span className="text-white/48">点击查看完整记录</span>
-        </div>
-
         <div ref={ref} className="relative pb-[50vh]">
           {experience.map((exp, i) => {
             const previewItems = getPreviewItems(exp.honors, exp.responsibilities);
@@ -188,6 +191,21 @@ export function Experience({ experience = fallbackExperience }: ExperienceProps)
                         </button>
                       </div>
                     </div>
+
+                    {!isAcademic && (
+                      <div
+                        className="flex items-center gap-3 border-2 bg-[#E8B923]/10 px-4 py-3"
+                        style={{ borderColor: GOLD, boxShadow: `4px 4px 0px ${GOLD}` }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter" className="shrink-0">
+                          <circle cx="12" cy="8" r="6" />
+                          <path d="M15.5 12.5 17 22l-5-3-5 3 1.5-9.5" />
+                        </svg>
+                        <span className="text-[11px] md:text-xs font-bold uppercase tracking-[0.16em]" style={{ color: GOLD }}>
+                          获得 2026 Q1 Lark Spot Bonus
+                        </span>
+                      </div>
+                    )}
 
                     {previewItems.length > 0 && (
                       <div className="grid gap-4 pt-4 md:grid-cols-[170px_1fr] border-t-2 border-dashed border-white/20 mt-2">
@@ -307,21 +325,86 @@ export function Experience({ experience = fallbackExperience }: ExperienceProps)
                 </div>
               )}
 
-              {activeExperience.achievements.length > 0 && (
+              {activeExperience.achievements.length > 0 && (() => {
+                const isByte = activeExperience.id === "exp-1";
+                const accent = activeExperience.id === "exp-hit-monitor" ? "#9B5CFF" : "#325ab4";
+                return (
                 <div>
-                  <ScrambledText as="h4" className="text-xs font-bold uppercase tracking-widest text-brand-muted mb-6 font-pixel">
-                    {activeExperience.honors.length > 0 && activeExperience.responsibilities.length === 0 ? "竞赛/科研" : "代表成果"}
-                  </ScrambledText>
-                  <ul className="flex flex-col gap-4">
-                    {activeExperience.achievements.map((item, index) => (
-                      <li key={index} className={`flex gap-4 text-white/90 leading-relaxed border-l-2 border-white/10 pl-4 transition-colors ${activeExperience.id === "exp-hit-monitor" ? "hover:border-[#9B5CFF]" : "hover:border-[#325ab4]"}`}>
-                        <span className={`mt-1 font-bold ${activeExperience.id === "exp-hit-monitor" ? "text-[#9B5CFF]" : "text-[#325ab4]"}`}>{">"}</span>
-                        <ScrambledText as="span">{item}</ScrambledText>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mb-6 flex items-center justify-between gap-4">
+                    <ScrambledText as="h4" className="text-xs font-bold uppercase tracking-widest text-brand-muted font-pixel">
+                      {activeExperience.honors.length > 0 && activeExperience.responsibilities.length === 0 ? "竞赛/科研" : "代表成果"}
+                    </ScrambledText>
+                    {isByte && (
+                      <button
+                        type="button"
+                        onClick={() => setShowStarDetails((prev) => !prev)}
+                        className="flex shrink-0 items-center gap-2 border-2 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:text-black"
+                        style={{ borderColor: accent, boxShadow: `3px 3px 0px ${accent}`, backgroundColor: showStarDetails ? accent : "transparent", color: showStarDetails ? "#000" : undefined }}
+                        aria-expanded={showStarDetails}
+                      >
+                        {showStarDetails ? "收起详情" : "展示详情"}
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter" style={{ transform: showStarDetails ? "rotate(180deg)" : "none", transition: "transform 0.3s" }}>
+                          <path d="M6 9l6 6 6-6" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {isByte && showStarDetails ? (
+                    <ul className="flex flex-col gap-3">
+                      {byteStarProjects.map((project, index) => {
+                        const isOpen = openStarIndex === index;
+                        return (
+                          <li key={index} className="border-2 border-white/15" style={isOpen ? { borderColor: accent } : undefined}>
+                            <button
+                              type="button"
+                              onClick={() => setOpenStarIndex(isOpen ? null : index)}
+                              className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-white/5"
+                              aria-expanded={isOpen}
+                            >
+                              <span className="flex items-center gap-3">
+                                <span className="text-xs font-bold tabular-nums" style={{ color: accent }}>{String(index + 1).padStart(2, "0")}</span>
+                                <span className="text-sm md:text-base font-bold text-white">{project.title}</span>
+                              </span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter" className="shrink-0" style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.3s" }}>
+                                <path d="M6 9l6 6 6-6" />
+                              </svg>
+                            </button>
+                            {isOpen && (
+                              <dl className="flex flex-col gap-3 border-t-2 border-dashed border-white/15 px-4 py-4 text-sm leading-relaxed">
+                                {[
+                                  { k: "S", label: "情境 Situation", v: project.situation },
+                                  { k: "T", label: "任务 Task", v: project.task },
+                                  { k: "A", label: "行动 Action", v: project.action },
+                                  { k: "R", label: "结果 Result", v: project.result },
+                                ].map((seg) => (
+                                  <div key={seg.k} className="grid grid-cols-[auto_1fr] gap-3">
+                                    <dt className="flex h-6 w-6 items-center justify-center border text-[11px] font-bold" style={{ borderColor: accent, color: accent }}>{seg.k}</dt>
+                                    <dd className="text-white/85">
+                                      <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-brand-muted">{seg.label}</span>
+                                      {seg.v}
+                                    </dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <ul className="flex flex-col gap-4">
+                      {activeExperience.achievements.map((item, index) => (
+                        <li key={index} className={`flex gap-4 text-white/90 leading-relaxed border-l-2 border-white/10 pl-4 transition-colors ${activeExperience.id === "exp-hit-monitor" ? "hover:border-[#9B5CFF]" : "hover:border-[#325ab4]"}`}>
+                          <span className={`mt-1 font-bold ${activeExperience.id === "exp-hit-monitor" ? "text-[#9B5CFF]" : "text-[#325ab4]"}`}>{">"}</span>
+                          <ScrambledText as="span">{item}</ScrambledText>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>

@@ -362,6 +362,7 @@ async function syncProjectArchive() {
     detail_images: Array.isArray(project.detailImages)
       ? project.detailImages.map((imagePath) => toStoredAssetRef(project, imagePath, "detail"))
       : [],
+    embed_urls: Array.isArray(project.embedUrls) ? project.embedUrls : [],
     tags: project.tags,
     sort_order: project.sortOrder ?? 0,
   }));

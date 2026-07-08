@@ -9,6 +9,7 @@ export type ArchiveProject = {
   summary: string;
   coverImage?: string;
   detailImages: string[];
+  embedUrls?: string[];
   tags: string[];
   sortOrder?: number;
 };

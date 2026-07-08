@@ -4,8 +4,6 @@ import { Hero } from "./components/Hero";
 import { About } from "./components/About";
 import { AboutProjectSeam } from "./components/AboutProjectSeam";
 import { Experience } from "./components/Experience";
-import { Skills } from "./components/Skills";
-import { Beyond } from "./components/Beyond";
 import { Contact } from "./components/Contact";
 import { getArchiveProjectBySlug, projectArchiveByCategory, type ArchiveProject } from "./data/projectArchive";
 import { fallbackExperience, fetchExperiences, type ExperienceItem } from "./data/experience";
@@ -334,8 +332,6 @@ function App() {
           )}
         </Suspense>
         <Experience experience={experience} />
-        <Skills />
-        <Beyond />
       </main>
 
       <Suspense fallback={archiveRoute.category ? <ProjectGalleryFallback /> : null}>

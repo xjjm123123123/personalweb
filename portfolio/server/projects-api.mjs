@@ -1,15 +1,32 @@
 import { createServer } from "node:http";
-import { readFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
+import { extname, normalize, resolve } from "node:path";
+import {
+  fetchExperiences,
+  fetchProjectArchive,
+  fetchProjects,
+  getCacheHeaders,
+} from "./supabase-api.mjs";
 
 const PORT = Number(process.env.PORT || process.env.PROJECTS_API_PORT || 8787);
 const ENV_PATH = resolve(process.cwd(), ".env");
+const DIST_DIR = resolve(process.cwd(), "dist");
 const API_RESPONSE_TTL_MS = 1000 * 60 * 5;
 const apiResponseCache = new Map();
-
-function getStorageBucket() {
-  return process.env.SUPABASE_ASSETS_BUCKET || "portfolio-assets";
-}
+const staticMimeTypes = {
+  ".css": "text/css; charset=utf-8",
+  ".gif": "image/gif",
+  ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+  ".woff2": "font/woff2",
+};
 
 function loadLocalEnv() {
   if (!existsSync(ENV_PATH)) return;
@@ -43,11 +60,41 @@ function writeJson(res, statusCode, payload, extraHeaders = {}) {
   res.end(JSON.stringify(payload));
 }
 
-function getCacheHeaders() {
-  return {
-    "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
-    Vary: "Origin",
-  };
+function writeStaticFile(req, res, requestPath) {
+  if (!existsSync(DIST_DIR)) {
+    writeJson(res, 404, { error: "Static build not found. Run npm run build first." });
+    return;
+  }
+
+  const decodedPath = decodeURIComponent(requestPath.split("?")[0] || "/");
+  const normalizedPath = normalize(decodedPath).replace(/^(\.\.[/\\])+/, "");
+  const requestedFile = normalizedPath === "/" ? "/index.html" : normalizedPath;
+  const filePath = resolve(DIST_DIR, `.${requestedFile}`);
+  const fallbackPath = resolve(DIST_DIR, "index.html");
+  const targetPath = filePath.startsWith(DIST_DIR) && existsSync(filePath) && statSync(filePath).isFile()
+    ? filePath
+    : fallbackPath;
+
+  if (!targetPath.startsWith(DIST_DIR) || !existsSync(targetPath)) {
+    writeJson(res, 404, { error: "Not found" });
+    return;
+  }
+
+  const extension = extname(targetPath);
+  const contentType = staticMimeTypes[extension] || "application/octet-stream";
+
+  res.writeHead(200, {
+    "Content-Type": contentType,
+    "Cache-Control": targetPath === fallbackPath
+      ? "no-cache"
+      : "public, max-age=31536000, immutable",
+  });
+  if (req.method === "HEAD") {
+    res.end();
+    return;
+  }
+
+  createReadStream(targetPath).pipe(res);
 }
 
 function getCachedProjects(cacheKey) {
@@ -88,187 +135,6 @@ function setCachedPayload(cacheKey, payload) {
   });
 }
 
-function toTextArray(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item)).filter(Boolean);
-  }
-
-  return String(value ?? "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function toPublicAssetUrl(value) {
-  if (!value) return "";
-
-  const stringValue = String(value);
-  if (/^https?:\/\//i.test(stringValue) || stringValue.startsWith("/")) {
-    return stringValue;
-  }
-
-  const supabaseUrl = process.env.SUPABASE_URL;
-  if (!supabaseUrl) {
-    return stringValue;
-  }
-
-  return new URL(
-    `/storage/v1/object/public/${getStorageBucket()}/${stringValue}`,
-    supabaseUrl,
-  ).toString();
-}
-
-function normalizeLegacyProject(row) {
-  return {
-    id: String(row.id ?? row.slug ?? ""),
-    slug: String(row.slug ?? row.id),
-    title: row.title ?? "",
-    description: row.description ?? "",
-    image: toPublicAssetUrl(row.image ?? ""),
-    tags: toTextArray(row.tags),
-  };
-}
-
-function normalizeArchiveProject(row) {
-  const image = toPublicAssetUrl(row.image ?? "");
-
-  return {
-    id: String(row.id ?? row.slug ?? ""),
-    slug: String(row.slug ?? row.id),
-    category: row.category ?? "",
-    year: row.year ? String(row.year) : undefined,
-    title: row.title ?? "",
-    summary: row.summary ?? row.description ?? "",
-    coverImage: image || undefined,
-    detailImages: Array.isArray(row.detail_images)
-      ? row.detail_images.map((item) => toPublicAssetUrl(item)).filter(Boolean)
-      : image
-        ? [image]
-        : [],
-    tags: toTextArray(row.tags),
-    sortOrder: Number(row.sort_order ?? 0),
-  };
-}
-
-function normalizeExperience(row) {
-  return {
-    id: String(row.id ?? row.slug ?? row.company ?? ""),
-    company: row.company ?? "",
-    role: row.role ?? row.title ?? "",
-    date: row.date ?? row.period ?? "",
-    location: row.location ?? "",
-    responsibilities: toTextArray(row.responsibilities),
-    honors: toTextArray(row.honors),
-    achievements: toTextArray(row.achievements),
-    sortOrder: Number(row.sort_order ?? 0),
-  };
-}
-
-async function requestSupabaseRows(category, select) {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey =
-    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const table = process.env.SUPABASE_PROJECTS_TABLE || "projects";
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error(
-      "Missing SUPABASE_URL and one of SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY in .env",
-    );
-  }
-
-  const apiUrl = new URL(`/rest/v1/${table}`, supabaseUrl);
-  apiUrl.searchParams.set("select", select);
-  apiUrl.searchParams.set("category", `eq.${category}`);
-  apiUrl.searchParams.set("order", "sort_order.asc,title.asc");
-
-  const response = await fetch(apiUrl, {
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`Supabase request failed: ${response.status} ${message}`);
-  }
-
-  return response.json();
-}
-
-async function requestSupabaseExperienceRows(select) {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey =
-    process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const table = process.env.SUPABASE_EXPERIENCES_TABLE || "experiences";
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error(
-      "Missing SUPABASE_URL and one of SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY in .env",
-    );
-  }
-
-  const apiUrl = new URL(`/rest/v1/${table}`, supabaseUrl);
-  apiUrl.searchParams.set("select", select);
-  apiUrl.searchParams.set("order", "sort_order.asc,date.desc,company.asc");
-
-  const response = await fetch(apiUrl, {
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`Supabase request failed: ${response.status} ${message}`);
-  }
-
-  return response.json();
-}
-
-async function requestWithFallback(category, selects) {
-  let lastError = null;
-
-  for (const select of selects) {
-    try {
-      return await requestSupabaseRows(category, select);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError ?? new Error("Supabase request failed");
-}
-
-async function fetchProjects(category) {
-  const rows = await requestWithFallback(category, [
-    "slug,id,category,title,description,image,tags,sort_order",
-    "id,category,title,description,image,tags,sort_order",
-  ]);
-
-  return rows.map(normalizeLegacyProject);
-}
-
-async function fetchProjectArchive(category) {
-  const rows = await requestWithFallback(category, [
-    "slug,id,category,year,title,description,image,detail_images,tags,sort_order",
-    "id,category,title,description,image,tags,sort_order",
-  ]);
-
-  return rows.map(normalizeArchiveProject);
-}
-
-async function fetchExperiences() {
-  const rows = await requestSupabaseExperienceRows(
-    "id,company,role,date,location,responsibilities,honors,achievements,sort_order",
-  );
-
-  return rows.map(normalizeExperience);
-}
-
 loadLocalEnv();
 
 const server = createServer(async (req, res) => {
@@ -279,7 +145,7 @@ const server = createServer(async (req, res) => {
 
   const requestUrl = new URL(req.url || "/", `http://${req.headers.host}`);
 
-  if (req.method !== "GET") {
+  if (req.method !== "GET" && req.method !== "HEAD") {
     writeJson(res, 404, { error: "Not found" });
     return;
   }
@@ -289,7 +155,7 @@ const server = createServer(async (req, res) => {
   const isExperiencesApi = requestUrl.pathname === "/api/experiences";
 
   if (!isLegacyProjectsApi && !isArchiveProjectsApi && !isExperiencesApi) {
-    writeJson(res, 404, { error: "Not found" });
+    writeStaticFile(req, res, requestUrl.pathname);
     return;
   }
 

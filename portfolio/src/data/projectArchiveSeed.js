@@ -89,5 +89,22 @@ export const projectArchiveSeedByCategory = {
       tags: ["Interactive News", "Data Viz", "AI QA Bot"],
       sortOrder: 10,
     },
+    {
+      id: "binfeng-scroll-interaction",
+      slug: "binfeng-scroll-interaction-system",
+      category: "Web",
+      year: "2025",
+      title: "豳风图交互系统设计",
+      summary:
+        "本设计以《诗经·豳风》及《豳风图》为文化对象，构建“AI意象视频+长卷交互阅读”的数字展示系统。系统通过长卷横向浏览、8个文化热点、局部意象视频、沉浸/解读双模式、RAG导览助手和读画报告，将静态古画转化为可探索、可观看、可提问的交互作品。个人部分主要完成分镜筛选、视频生成与后处理、前端交互、热点数据组织、意象档案和展示材料整合。",
+      coverImage: "/image/binfeng-cover.png",
+      detailImages: [],
+      embedUrls: [
+        "https://middle-ppt.vercel.app/",
+        "https://ai-digital-scroll-platform.vercel.app/",
+      ],
+      tags: ["数字艺术", "机器学习", "Web"],
+      sortOrder: 20,
+    },
   ],
 };

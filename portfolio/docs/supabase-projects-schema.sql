@@ -14,7 +14,8 @@ create table if not exists public.projects (
 alter table public.projects
   add column if not exists slug text,
   add column if not exists year text,
-  add column if not exists detail_images text[] not null default '{}';
+  add column if not exists detail_images text[] not null default '{}',
+  add column if not exists embed_urls text[] not null default '{}';
 
 update public.projects
 set slug = lower(regexp_replace(coalesce(title, ''), '[^a-zA-Z0-9]+', '-', 'g'))
@@ -37,3 +38,6 @@ comment on column public.projects.image is
 
 comment on column public.projects.detail_images is
   'Ordered list of archive detail image storage object paths or external URLs shown inside project detail.';
+
+comment on column public.projects.embed_urls is
+  'Ordered list of embeddable demo URLs rendered as iframes inside project detail.';

@@ -24,6 +24,11 @@ function preloadImage(src: string) {
   image.src = src;
 }
 
+function getEmbedLabel(index: number) {
+  const labels = ["项目介绍", "项目展示"];
+  return labels[index] ?? `Demo ${String(index + 1).padStart(2, "0")}`;
+}
+
 function PixelLoader({
   compact = false,
   className = "",
@@ -279,8 +284,10 @@ export function ProjectGallery({
 
   const getCardStyle = (project: ArchiveProject) => {
     const titleMeasure = getTitleMeasure(project.title);
-    const minWidth = project.slug === "northeast-revitalization-interactive-news" ? 46 : 18;
-    const maxWidth = project.slug === "northeast-revitalization-interactive-news" ? 58 : 32;
+    const isNortheastProject = project.slug === "northeast-revitalization-interactive-news";
+    const isBinfengProject = project.slug === "binfeng-scroll-interaction-system";
+    const minWidth = isNortheastProject ? 38 : isBinfengProject ? 28 : 18;
+    const maxWidth = isNortheastProject ? 42 : isBinfengProject ? 30 : 32;
     const preferredWidth = Math.min(maxWidth, Math.max(minWidth, titleMeasure * 2.7 + 10));
 
     return { width: `min(100%, ${preferredWidth.toFixed(1)}rem)` };
@@ -408,7 +415,11 @@ export function ProjectGallery({
                         fallbackSrc={project.coverImage}
                         alt={project.title}
                         priority={index < 2}
-                        imgClassName="absolute inset-0 h-full w-full object-cover object-right transition-transform duration-1000 ease-out group-hover:scale-105 opacity-65 group-hover:opacity-100"
+                        imgClassName={`absolute inset-0 h-full w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105 opacity-65 group-hover:opacity-100 ${
+                          project.slug === "binfeng-scroll-interaction-system"
+                            ? "object-center"
+                            : "object-right"
+                        }`}
                       />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-[#050506] via-[#050506]/55 to-[#050506]/10 opacity-95 transition-opacity duration-700 group-hover:opacity-75" />
@@ -432,7 +443,7 @@ export function ProjectGallery({
                         <h3
                           className={`font-display font-black leading-[0.95] text-white tracking-tight max-w-4xl ${
                             project.slug === "northeast-revitalization-interactive-news"
-                              ? "text-right whitespace-nowrap text-[clamp(0.95rem,4vw,2.2rem)] md:text-[clamp(2.2rem,3.4vw,4.6rem)]"
+                              ? "text-right whitespace-nowrap text-[clamp(0.82rem,3vw,1.45rem)] md:text-[clamp(1.35rem,2vw,2.35rem)]"
                               : "whitespace-nowrap text-3xl md:text-5xl"
                           }`}
                         >
@@ -535,6 +546,49 @@ export function ProjectGallery({
                     </button>
                   </div>
                 </div>
+
+                {selectedProject.embedUrls && selectedProject.embedUrls.length > 0 && (
+                  <div className="space-y-6">
+                    <div className="font-pixel text-[10px] uppercase tracking-[0.24em] text-white/45">
+                      Interactive Embeds
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                      {selectedProject.embedUrls.map((url, index) => (
+                        <motion.div
+                          key={url}
+                          initial={{ opacity: 0, y: 32 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.08, duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+                          className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.035] shadow-[0_24px_80px_rgba(0,0,0,0.42)]"
+                        >
+                          <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-black/35 px-5 py-4">
+                            <div className="font-pixel text-[10px] uppercase tracking-[0.22em] text-white/55">
+                              {getEmbedLabel(index)}
+                            </div>
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-pixel text-[10px] uppercase tracking-[0.18em] text-white/45 transition-colors hover:text-white"
+                            >
+                              Open
+                            </a>
+                          </div>
+                          <div className="relative aspect-[16/10] bg-black">
+                            <iframe
+                              src={url}
+                              title={`${selectedProject.title} interactive demo ${index + 1}`}
+                              className="absolute inset-0 h-full w-full border-0"
+                              loading="lazy"
+                              allow="autoplay 'none'; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              referrerPolicy="strict-origin-when-cross-origin"
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {selectedProject.detailImages.length > 0 ? (
                   <div className="space-y-6">
