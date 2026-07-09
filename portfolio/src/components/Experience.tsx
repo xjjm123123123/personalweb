@@ -356,20 +356,40 @@ export function Experience({ experience = fallbackExperience }: ExperienceProps)
                         const isOpen = openStarIndex === index;
                         return (
                           <li key={index} className="border-2 border-white/15" style={isOpen ? { borderColor: accent } : undefined}>
-                            <button
-                              type="button"
-                              onClick={() => setOpenStarIndex(isOpen ? null : index)}
-                              className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-white/5"
-                              aria-expanded={isOpen}
-                            >
-                              <span className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5">
+                              <button
+                                type="button"
+                                onClick={() => setOpenStarIndex(isOpen ? null : index)}
+                                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                aria-expanded={isOpen}
+                              >
                                 <span className="text-xs font-bold tabular-nums" style={{ color: accent }}>{String(index + 1).padStart(2, "0")}</span>
-                                <span className="text-sm md:text-base font-bold text-white">{project.title}</span>
-                              </span>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter" className="shrink-0" style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.3s" }}>
-                                <path d="M6 9l6 6 6-6" />
-                              </svg>
-                            </button>
+                                <span className="truncate text-sm md:text-base font-bold text-white">{project.title}</span>
+                              </button>
+                              {project.siteUrl && (
+                                <a
+                                  href={project.siteUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="shrink-0 border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition-all hover:-translate-y-0.5 hover:bg-white hover:text-black"
+                                  style={{ borderColor: accent, color: accent }}
+                                  aria-label={`打开${project.title}站点`}
+                                >
+                                  站点
+                                </a>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setOpenStarIndex(isOpen ? null : index)}
+                                className="shrink-0"
+                                aria-label={isOpen ? `收起${project.title}` : `展开${project.title}`}
+                                aria-expanded={isOpen}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="3" strokeLinecap="square" strokeLinejoin="miter" style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.3s" }}>
+                                  <path d="M6 9l6 6 6-6" />
+                                </svg>
+                              </button>
+                            </div>
                             {isOpen && (
                               <dl className="flex flex-col gap-3 border-t-2 border-dashed border-white/15 px-4 py-4 text-sm leading-relaxed">
                                 {[
