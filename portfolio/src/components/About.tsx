@@ -171,7 +171,7 @@ export function About({ experience = fallbackExperience }: AboutProps) {
                 <div className="divider-line h-px flex-1 bg-white/10 origin-left group-hover/section:bg-brand-primary/30 transition-colors duration-500"></div>
               </div>
               <div className="flex flex-col gap-3">
-                {experience.map((exp) => (
+                {experience.filter((exp) => exp.id !== "exp-hit-monitor").map((exp) => (
                   <div key={exp.id} className="group/item relative transition-transform duration-500 ease-out hover:translate-x-1.5 py-1">
                     <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-1 mb-1.5">
                       <div>
