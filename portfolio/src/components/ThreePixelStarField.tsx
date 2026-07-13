@@ -183,7 +183,6 @@ export function ThreePixelStarField() {
       isDraggingModel = true;
       activePointerId = event.pointerId;
       lastPointerClientX = event.clientX;
-      currentIdleSpinFactor = 0;
       aboutSection.setPointerCapture(event.pointerId);
     };
 
@@ -467,8 +466,8 @@ export function ThreePixelStarField() {
       if (particlesMesh && idleRotationGroup) {
         currentIdleSpinFactor = THREE.MathUtils.lerp(
           currentIdleSpinFactor,
-          isPointerInModelZone ? 0.1 : 1,
-          isPointerInModelZone ? 0.18 : 0.08,
+          1,
+          0.08,
         );
         idleRotationGroup.rotation.y += 0.005 * currentIdleSpinFactor * frameFactor;
 
