@@ -69,9 +69,9 @@ export function About({ experience = fallbackExperience }: AboutProps) {
     <section 
       id="about" 
       ref={containerRef}
-      className="min-h-[112vh] md:min-h-[118vh] w-full relative z-10 pointer-events-none"
+      className="min-h-[112vh] md:min-h-[118vh] w-full relative z-10 pointer-events-auto"
     >
-      <div className="sticky top-0 h-screen w-full flex items-center justify-start px-6 md:px-16 lg:px-24 pointer-events-none overflow-hidden">
+      <div className="sticky top-0 h-screen w-full flex items-center justify-start px-6 md:px-16 lg:px-24 pointer-events-auto overflow-hidden">
         {/* Left side content panel - Editorial Split Layout */}
         <div 
           ref={contentRef}

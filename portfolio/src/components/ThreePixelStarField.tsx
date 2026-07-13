@@ -120,9 +120,20 @@ export function ThreePixelStarField() {
     }
 
     let particlesMesh: THREE.Points | null = null;
+    let scrollRotationGroup: THREE.Group | null = null;
+    let idleRotationGroup: THREE.Group | null = null;
+    let pointerInteractionGroup: THREE.Group | null = null;
     let animationFrameId: number;
     const scrollTriggerInstances: ScrollTrigger[] = [];
     let cancelled = false;
+    let aboutSection: HTMLElement | null = null;
+    let isPointerInModelZone = false;
+    let activePointerId: number | null = null;
+    let isDraggingModel = false;
+    let lastPointerClientX: number | null = null;
+    let pointerRotationY = 0;
+    let currentIdleSpinFactor = 1;
+    let elapsedTime = 0;
 
     const lookAtTarget = new THREE.Vector3(0, 0, 0);
 
@@ -146,6 +157,78 @@ export function ThreePixelStarField() {
     document.body.classList.remove("hide-ribbons");
 
     const clock = new THREE.Clock();
+
+    const resolveModelZoneState = (event: PointerEvent) => {
+      if (!aboutSection) return;
+
+      const rect = aboutSection.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const xRatio = x / rect.width;
+      const yRatio = y / rect.height;
+
+      const withinBounds = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
+      isPointerInModelZone =
+        withinBounds && xRatio >= 0.42 && xRatio <= 0.98 && yRatio >= 0.08 && yRatio <= 0.94;
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+
+      resolveModelZoneState(event);
+      if (!isPointerInModelZone || !aboutSection) return;
+
+      isDraggingModel = true;
+      activePointerId = event.pointerId;
+      lastPointerClientX = event.clientX;
+      currentIdleSpinFactor = 0;
+      aboutSection.setPointerCapture(event.pointerId);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      resolveModelZoneState(event);
+
+      if (!isDraggingModel || activePointerId !== event.pointerId) {
+        if (!isPointerInModelZone) {
+          lastPointerClientX = null;
+        }
+        return;
+      }
+
+      if (lastPointerClientX === null) {
+        lastPointerClientX = event.clientX;
+        return;
+      }
+
+      const deltaX = event.clientX - lastPointerClientX;
+      lastPointerClientX = event.clientX;
+
+      if (Math.abs(deltaX) < 0.25) return;
+
+      pointerRotationY += deltaX * 0.0055;
+    };
+
+    const stopDragging = (event?: PointerEvent) => {
+      if (event && aboutSection && activePointerId === event.pointerId) {
+        if (aboutSection.hasPointerCapture(event.pointerId)) {
+          aboutSection.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      isDraggingModel = false;
+      activePointerId = null;
+      if (!isPointerInModelZone) {
+        lastPointerClientX = null;
+      }
+    };
+
+    const resetPointerTarget = () => {
+      isPointerInModelZone = false;
+      stopDragging();
+      lastPointerClientX = null;
+    };
 
     async function initParticles(targetMesh: THREE.Mesh, isFallback = false) {
       if (cancelled) return;
@@ -328,13 +411,19 @@ export function ThreePixelStarField() {
       });
 
       particlesMesh = new THREE.Points(geometry, material);
-      scene.add(particlesMesh);
+      scrollRotationGroup = new THREE.Group();
+      idleRotationGroup = new THREE.Group();
+      pointerInteractionGroup = new THREE.Group();
+      pointerInteractionGroup.add(particlesMesh);
+      idleRotationGroup.add(pointerInteractionGroup);
+      scrollRotationGroup.add(idleRotationGroup);
+      scene.add(scrollRotationGroup);
 
-      setupScroll(material, particlesMesh);
+      setupScroll(material, scrollRotationGroup);
       animate();
     }
 
-    function setupScroll(material: THREE.ShaderMaterial, particles: THREE.Points) {
+    function setupScroll(material: THREE.ShaderMaterial, rotationGroup: THREE.Group) {
       const heroSection = document.querySelector('#hero');
       const triggerOpts = heroSection
         ? { trigger: heroSection, start: "top top", end: "bottom top" }
@@ -352,7 +441,7 @@ export function ThreePixelStarField() {
       const st2 = ScrollTrigger.create({
         ...triggerOpts,
         scrub: true,
-        animation: gsap.to(particles.rotation, {
+        animation: gsap.to(rotationGroup.rotation, {
           y: Math.PI * 0.5,
           ease: "none",
         })
@@ -371,14 +460,27 @@ export function ThreePixelStarField() {
     }
 
     function animate() {
-      const elapsed = clock.getElapsedTime();
+      const delta = Math.min(clock.getDelta(), 0.05);
+      const frameFactor = delta * 60;
+      elapsedTime += delta;
 
-      if (particlesMesh) {
-        particlesMesh.rotation.y += 0.001; // 恢复围绕自身中心的缓慢旋转
+      if (particlesMesh && idleRotationGroup) {
+        currentIdleSpinFactor = THREE.MathUtils.lerp(
+          currentIdleSpinFactor,
+          isPointerInModelZone ? 0.1 : 1,
+          isPointerInModelZone ? 0.18 : 0.08,
+        );
+        idleRotationGroup.rotation.y += 0.005 * currentIdleSpinFactor * frameFactor;
+
+        if (pointerInteractionGroup) {
+          pointerInteractionGroup.rotation.x = 0;
+          pointerInteractionGroup.rotation.y = pointerRotationY;
+        }
+
         camera.lookAt(lookAtTarget);
 
         const material = particlesMesh.material as THREE.ShaderMaterial;
-        material.uniforms.uTime.value = elapsed;
+        material.uniforms.uTime.value = elapsedTime;
       }
 
       renderer.render(scene, camera);
@@ -392,17 +494,32 @@ export function ThreePixelStarField() {
       renderer.setSize(window.innerWidth * pixelRatio, window.innerHeight * pixelRatio, false);
       lookAtTarget.x = calculateLookAt();
     };
+
+    aboutSection = document.querySelector("#about");
     window.addEventListener("resize", onResize);
+    aboutSection?.addEventListener("pointerdown", handlePointerDown);
+    aboutSection?.addEventListener("pointermove", handlePointerMove);
+    aboutSection?.addEventListener("pointerup", stopDragging);
+    aboutSection?.addEventListener("pointercancel", stopDragging);
+    aboutSection?.addEventListener("pointerleave", resetPointerTarget);
 
     return () => {
       cancelled = true;
       window.removeEventListener("resize", onResize);
+      aboutSection?.removeEventListener("pointerdown", handlePointerDown);
+      aboutSection?.removeEventListener("pointermove", handlePointerMove);
+      aboutSection?.removeEventListener("pointerup", stopDragging);
+      aboutSection?.removeEventListener("pointercancel", stopDragging);
+      aboutSection?.removeEventListener("pointerleave", resetPointerTarget);
       document.body.classList.remove("hide-ribbons");
       cancelAnimationFrame(animationFrameId);
       scrollTriggerInstances.forEach(st => st.kill());
       if (particlesMesh) {
         particlesMesh.geometry.dispose();
         (particlesMesh.material as THREE.Material).dispose();
+      }
+      if (scrollRotationGroup) {
+        scene.remove(scrollRotationGroup);
       }
       renderer.dispose();
     };
